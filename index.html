@@ -440,7 +440,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=41;var BACK=null;var CP=0,XP="img";
+var VER=44;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -985,7 +985,10 @@ function promoCanvas(d,W,H){
   if(FX)decorEdges(x,W,H,P,FX);
   return c;
 }
-function drawPromo(cfg,d){return [{c:promoCanvas(d,1080,1350),name:"fiche-publicitaire"},{c:promoCanvas(d,1080,1920),name:"fiche-publicitaire-statut"}];}
+function drawPromo(cfg,d){var a=promoCanvas(d,1080,1350),b=promoCanvas(d,1080,1920);
+  /* pour une feuille (A4, A3…) on redessine la fiche à la forme exacte de la page : pas de bandes sur les côtés */
+  a._re=b._re=function(r){GUARD++;try{return promoCanvas(d,1080,Math.max(900,Math.min(2100,Math.round(1080/r))));}finally{GUARD--;}};
+  return [{c:a,name:"fiche-publicitaire"},{c:b,name:"fiche-publicitaire-statut"}];}
 
 /* ---- logo (SVG) ---- */
 var SYMS=[
@@ -1086,7 +1089,10 @@ var GUARD=0;
     return ft.call(this,t,x,y);};})();
 function drawKind(cfg,d){GUARD++;try{return drawKind0(cfg,d);}finally{GUARD--;}}
 function drawKind0(cfg,d){
-  if(cfg.kind==="poster")return drawPoster(cfg,d);
+  if(cfg.kind==="poster"){var rs=drawPoster(cfg,d);
+    /* export sur feuille (A4, A3…) : on redessine l'affiche à la forme exacte de la page, sans bandes sur les côtés */
+    rs.forEach(function(p){if(p.c)p.c._re=function(r){GUARD++;try{var c2={};for(var k in cfg)c2[k]=cfg[k];c2.h=Math.round(cfg.w*Math.max(1.2,Math.min(1.95,1/r)));return drawPoster(c2,d)[0].c;}finally{GUARD--;}};});
+    return rs;}
   if(cfg.kind==="carte")return drawCarte(cfg,d);
   if(cfg.kind==="menu")return drawMenu(cfg,d);
   if(cfg.kind==="badge")return drawBadge(cfg,d);
@@ -1178,6 +1184,7 @@ function composePage(c0,fmt,fit){
   var c=outCanvas(c0),land=c.width>c.height;
   if(fmt==="O"||!PFMT[fmt])return {c:c,pw:land?841.89:595.28};
   var F=PFMT[fmt],mw=land?F[1]:F[0],mh=land?F[0]:F[1],W=Math.round(mw/25.4*F[2]),H=Math.round(mh/25.4*F[2]),pw=mw*72/25.4;
+  if(c0._re){try{var mg=(SET.marge||0)*2,rr=(mw-mg)/(mh-mg);c=outCanvas(c0._re(rr));land=c.width>c.height;}catch(e){}}
   var pg=mk(W,H),x=pg.getContext("2d"),px=c.getContext("2d").getImageData(3,3,1,1).data;
   x.fillStyle="rgb("+px[0]+","+px[1]+","+px[2]+")";x.fillRect(0,0,W,H);
   if(fit!=="cover"&&Math.abs((c.width/c.height)/(W/H)-1)>0.04)softFill(x,c,0,0,W,H);
@@ -2098,8 +2105,13 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
     setTimeout(function(){leaving=false;try{history.pushState({yiri:1},"");}catch(e){}toast("Appuie sur le bouton d'accueil de ton téléphone pour fermer");},1200);
   }
   window.__askQuit=askQuit;
+  /* Chrome ignore les entrées d'historique ajoutées sans toucher l'écran : on en ajoute une vraie dès qu'on touche */
+  var armed=true;
+  function arm(){ if(!armed||leaving)return; armed=false; try{history.pushState({yiri:1},"");}catch(e){} }
+  ["pointerdown","touchstart","touchend","click","keydown"].forEach(function(ev){document.addEventListener(ev,arm,true);});
   window.addEventListener("popstate",function(){
     if(leaving)return;
+    armed=true;
     try{history.pushState({yiri:1},"");}catch(e){}
     var q=document.getElementById("yq");if(q){q.remove();return;}
     var vo=document.querySelector(".ovl");if(vo){vo.remove();return;}

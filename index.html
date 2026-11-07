@@ -440,7 +440,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=44;var BACK=null;var CP=0,XP="img";
+var VER=46;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -547,11 +547,15 @@ function wrap(x,text,font,maxW){
     out.push(line);});
   return out;}
 function fitSize(x,text,fam,wt,max,maxW,min){var s=max;while(s>min){x.font=wt+" "+s+"px "+fam;if(x.measureText(text).width<=maxW)break;s-=2;}return s;}
+/* recadrage qui protège la tête : le haut du visage reste dans le cadre, on rogne plutôt le bas (poitrine) */
+function headY(im,ih,bh){var ex=ih-bh;if(ex<=0)return -ex/2;var ht=headTopFrac(im),off=ht!=null?(ht-0.07)*ih:ex*0.18;return -Math.max(0,Math.min(ex,off));}
+function coverTop(x,im,dx,dy,dw,dh){x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";var r=Math.max(dw/im.width,dh/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,dx+(dw-w)/2,dy+(h>dh+1?headY(im,h,dh):(dh-h)/2),w,h);}
+function pEnt(){return ST.ps!==1&&(ST.ps!==2||!ST.photo||ST.photo.width/ST.photo.height<1.15);}
 function cover(x,im,dx,dy,dw,dh){x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";var r=Math.max(dw/im.width,dh/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,dx+(dw-w)/2,dy+(dh-h)/2,w,h);}
 function circlePhoto(x,im,cx,cy,r,ring,pbg){
   x.save();x.beginPath();x.arc(cx,cy,r+r*.06,0,7);x.fillStyle=ring;x.fill();
   x.beginPath();x.arc(cx,cy,r,0,7);x.clip();x.fillStyle=pbg;x.fillRect(cx-r,cy-r,2*r,2*r);
-  if(im)cover(x,im,cx-r,cy-r,2*r,2*r);x.restore();}
+  if(im)coverTop(x,im,cx-r,cy-r,2*r,2*r);x.restore();}
 function pFit(im,mw,mh,amin,amax){var a=Math.max(amin||0.5,Math.min(amax||1.9,im.width/im.height)),w=mw,h=w/a;if(h>mh){h=mh;w=h*a;}return [w,h];}
 function contain(x,im,dx,dy,dw,dh){x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";var r=Math.min(dw/im.width,dh/im.height),w=im.width*r,h=im.height*r;x.drawImage(im,dx+(dw-w)/2,dy+(dh-h)/2,w,h);return [w,h];}
 function blurFill(x,im,dx,dy,dw,dh,dark){var bl=mk(Math.max(24,Math.round(dw/14)),Math.max(24,Math.round(dh/14)));cover(bl.getContext("2d"),im,0,0,bl.width,bl.height);x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();x.imageSmoothingEnabled=true;x.drawImage(bl,dx,dy,dw,dh);if(dark){x.fillStyle="rgba(0,0,0,"+dark+")";x.fillRect(dx,dy,dw,dh);}x.restore();}
@@ -561,7 +565,7 @@ function framePhoto(x,im,cx,cy,w,h,ring,pbg){
   var rr=Math.min(w,h)*0.12,g=w*0.025;
   x.save();roundRect(x,cx-w/2-g,cy-h/2-g,w+2*g,h+2*g,rr+g);x.fillStyle=ring;x.fill();
   roundRect(x,cx-w/2,cy-h/2,w,h,rr);x.clip();x.fillStyle=pbg;x.fillRect(cx-w/2,cy-h/2,w,h);
-  if(im){var r=Math.max(w/im.width,h/im.height),iw=im.width*r,ih=im.height*r;x.drawImage(im,cx-iw/2,cy-h/2-(ih-h)*(Math.abs(w/h-im.width/im.height)<0.02?0.5:0.25),iw,ih);}
+  if(im){var r=Math.max(w/im.width,h/im.height),iw=im.width*r,ih=im.height*r;x.drawImage(im,cx-iw/2,cy-h/2+(Math.abs(w/h-im.width/im.height)<0.02||ih<=h?-(ih-h)*0.5:headY(im,ih,h)),iw,ih);}
   x.restore();}
 function initials(s){return String(s||"?").trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||"";}).join("").toUpperCase();}
 function numFmt(n){return (Math.round(n*100)/100).toLocaleString("fr-FR").replace(/[  ]/g," ");}
@@ -585,7 +589,7 @@ function drawPoster(cfg,d){
       if(ST.photo){PHB=0;var im2=ST.photo,wide=ST.ps!==1&&(H/W)>1.05;
         if(wide){var bl=mk(Math.max(24,Math.round(W/14)),Math.max(32,Math.round(H/14)));cover(bl.getContext("2d"),im2,0,0,bl.width,bl.height);x.imageSmoothingEnabled=true;x.drawImage(bl,0,0,W,H);x.fillStyle="rgba(0,0,0,.55)";x.fillRect(0,0,W,H);
           var cz=contain(x,im2,0,H*0.05,W,H*0.60),ph3=cz[1],pyo=H*0.05+(H*0.60-ph3)/2;PHB=pyo+ph3;var gw=x.createLinearGradient(0,PHB-W*0.12,0,PHB+W*0.02);gw.addColorStop(0,"rgba(0,0,0,0)");gw.addColorStop(1,"rgba(0,0,0,.6)");x.fillStyle=gw;x.fillRect(0,PHB-W*0.12,W,W*0.14);}
-        else{cover(x,im2,0,0,W,H);}
+        else{coverTop(x,im2,0,0,W,H);}
         var g=x.createLinearGradient(0,H*.25,0,H);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.85)");x.fillStyle=g;x.fillRect(0,0,W,H);}
       else{var g2=x.createLinearGradient(0,0,W,H);g2.addColorStop(0,P.ac);g2.addColorStop(1,P.ac2===P.ac?P.fg:P.ac2);x.fillStyle=g2;x.fillRect(0,0,W,H);
         x.fillStyle="rgba(0,0,0,.28)";x.fillRect(0,0,W,H);}
@@ -663,7 +667,7 @@ function drawPoster(cfg,d){
       T(d.sous,W*0.042,F.b,"italic",P.fg,W*0.02);
       T(d.titre,fitSize(x,(d.titre||"").split("\n")[0],F.h,F.hw,W*0.15,(W-2*m)/s,28),F.h,F.hw,P.ac,W*0.03);
       x.fillStyle=P.ac;x.fillRect(W/2-W*0.1,y,W*0.2,W*0.006);y+=W*0.04*s;
-      if(hasPh){if(ST.ps!==1&&ST.ps!==2){var fz=pFit(ST.photo,W*0.86*s*PK,H*0.44*s*PK);framePhoto(x,ST.photo,W/2,y+fz[1]/2,fz[0],fz[1],P.ac,P.bg);y+=fz[1]+W*0.045*s;}else if(photoShape(ST.photo)==='w'){var pw=Math.min(W*0.66*s,W*0.76),phh=pw*0.68;framePhoto(x,ST.photo,W/2,y+phh/2,pw,phh,P.ac,P.bg);y+=phh+W*0.045*s;}else{var r=W*0.2*s*PK;circlePhoto(x,ST.photo,W/2,y+r,r,P.ac,P.bg);y+=2*r+W*0.04*s;}}
+      if(hasPh){if(pEnt()){var fz=pFit(ST.photo,Math.min(W*0.84,W*0.86*s*PK),H*0.44*s*PK);framePhoto(x,ST.photo,W/2,y+fz[1]/2,fz[0],fz[1],P.ac,P.bg);y+=fz[1]+W*0.045*s;}else if(photoShape(ST.photo)==='w'){var pw=Math.min(W*0.66*s,W*0.76),phh=pw*0.68;framePhoto(x,ST.photo,W/2,y+phh/2,pw,phh,P.ac,P.bg);y+=phh+W*0.045*s;}else{var r=Math.min(W*0.27,W*0.2*s*PK);circlePhoto(x,ST.photo,W/2,y+r,r,P.ac,P.bg);y+=2*r+W*0.04*s;}}
       when.forEach(function(t){T(t,W*0.05,F.h,"bold",P.fg,W*0.008);});
       y+=W*0.02*s;
       det.forEach(function(t){T(t,W*0.042,F.b,"normal",P.fg,W*0.008);});
@@ -679,7 +683,7 @@ function drawPoster(cfg,d){
       T(d.sous,W*0.04,F.b,"italic",tcol,W*0.015);
       T(d.titre,fitSize(x,(d.titre||"").split("\n")[0],F.h,F.hw,W*0.14,(W-2*m)/s,28),F.h,F.hw,tcol,0);
       var y0=bh+W*0.04*s;
-      if(hasPh){if(ST.ps!==1&&ST.ps!==2){var fz2=pFit(ST.photo,W*0.56*s*PK,H*0.46*s*PK),ptop2=Math.max(bh-fz2[1]*0.3,y+W*0.03*s);framePhoto(x,ST.photo,W-m-fz2[0]/2,ptop2+fz2[1]/2,fz2[0],fz2[1],P.bg,P.bg);y0=ptop2+fz2[1]+W*0.04*s;}else if(photoShape(ST.photo)==='w'){var pw2=Math.min(W*0.5*s,W*0.6),ph2=pw2*0.68;var ptop=Math.max(bh-ph2*0.3,y+W*0.03*s);framePhoto(x,ST.photo,W-m-pw2/2,ptop+ph2/2,pw2,ph2,P.bg,P.bg);y0=ptop+ph2+W*0.04*s;}else{var r2=W*0.16*s*PK;circlePhoto(x,ST.photo,W-m-r2,bh,r2,P.bg,P.bg);y0=bh+r2+W*0.03*s;}}
+      if(hasPh){if(pEnt()){var fz2=pFit(ST.photo,Math.min(W*0.62,W*0.56*s*PK),H*0.46*s*PK),ptop2=Math.max(bh-fz2[1]*0.3,y+W*0.03*s);framePhoto(x,ST.photo,W-m-fz2[0]/2,ptop2+fz2[1]/2,fz2[0],fz2[1],P.bg,P.bg);y0=ptop2+fz2[1]+W*0.04*s;}else if(photoShape(ST.photo)==='w'){var pw2=Math.min(W*0.5*s,W*0.6),ph2=pw2*0.68;var ptop=Math.max(bh-ph2*0.3,y+W*0.03*s);framePhoto(x,ST.photo,W-m-pw2/2,ptop+ph2/2,pw2,ph2,P.bg,P.bg);y0=ptop+ph2+W*0.04*s;}else{var r2=Math.min(W*0.22,W*0.16*s*PK),cy2=Math.max(bh,y+W*0.03*s+r2*1.06);circlePhoto(x,ST.photo,W-m-r2,cy2,r2,P.bg,P.bg);y0=cy2+r2+W*0.03*s;}}
       y=Math.max(y0,bh+W*0.05);
       when.forEach(function(t){T(t,W*0.05,F.h,"bold",P.ac,W*0.008);});
       y+=W*0.02*s;det.forEach(function(t){T(t,W*0.042,F.b,"normal",P.fg,W*0.008);});
@@ -897,7 +901,7 @@ function promoCanvas(d,W,H){
       if(ok)break;}
     return {f:ff,ch:ch2};}
   function bestLay(av){var a=svFit(av,"col"),b=nIt>4?svFit(av,"row"):{f:0};return b.f>a.f*1.08?{m:"row",f:b.f}:{m:"col",f:a.f};}
-  var hh=H*(hasPh?(H>1500?0.32:0.45):(H>1500?0.25:0.27)),hhMin=H*(hasPh?(H>1500?0.28:0.34):0.2);
+  var hh=hasPh?Math.min(H*0.45,Math.max(H*0.32,W*0.57)):H*(H>1500?0.25:0.27),hhMin=H*(hasPh?(H>1500?0.28:0.34):0.2);
   function topOf(hv){return (tpl===2?hv*1.15+H*0.02:hv+H*0.03)+introH;}
   while(hh>hhMin&&bestLay(bot0-topOf(hh)).f<W*0.04)hh-=H*0.005;
   var LAY=bestLay(bot0-topOf(hh)),rowMode=LAY.m==="row";gap0=W*(rowMode?0.014:0.02);
@@ -2099,16 +2103,18 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
     try{document.getElementById("yq_n").focus();}catch(e){}
   }
   function quit(){
-    leaving=true;history.back();
-    setTimeout(function(){history.back();},120);
-    setTimeout(function(){try{window.close();}catch(e){}},400);
-    setTimeout(function(){leaving=false;try{history.pushState({yiri:1},"");}catch(e){}toast("Appuie sur le bouton d'accueil de ton téléphone pour fermer");},1200);
+    leaving=true;
+    for(var i=0;i<14;i++)(function(i){setTimeout(function(){try{history.back();}catch(e){}},i*90);})(i);
+    setTimeout(function(){try{window.close();}catch(e){}},1500);
+    setTimeout(function(){leaving=false;armed=true;try{history.pushState({yiri:1},"");}catch(e){}toast("Appuie sur le bouton d'accueil de ton téléphone pour fermer");},2600);
   }
   window.__askQuit=askQuit;
   /* Chrome ignore les entrées d'historique ajoutées sans toucher l'écran : on en ajoute une vraie dès qu'on touche */
   var armed=true;
-  function arm(){ if(!armed||leaving)return; armed=false; try{history.pushState({yiri:1},"");}catch(e){} }
-  ["pointerdown","touchstart","touchend","click","keydown"].forEach(function(ev){document.addEventListener(ev,arm,true);});
+  function arm(){ if(!armed||leaving)return;
+    try{ if(navigator.userActivation&&!navigator.userActivation.isActive)return; /* seul un vrai geste compte pour Chrome */
+      history.pushState({yiri:1},""); armed=false; }catch(e){} }
+  ["pointerup","touchend","mouseup","click","keydown"].forEach(function(ev){document.addEventListener(ev,arm,true);});
   window.addEventListener("popstate",function(){
     if(leaving)return;
     armed=true;

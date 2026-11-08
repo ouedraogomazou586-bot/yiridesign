@@ -456,7 +456,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=53;var BACK=null;var CP=0,XP="img";
+var VER=56;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -630,15 +630,17 @@ function drawPoster(cfg,d){
       lines.forEach(function(l,i){x.fillText(l,xx,y0+pad+i*lh);});
       y=y0+hh+2*pad+W*0.02*s;return tot;
     }
-    if(ST.lay===2&&ST.gal&&ST.gal.filter(function(g){return g.im;}).length){
+    if((ST.lay===2||(ST.gal&&ST.gal.filter(function(g){return g.im;}).length))&&ST.gal&&ST.gal.filter(function(g){return g.im;}).length){
       var G=ST.gal.filter(function(g){return g.im;}),n=G.length;
-      var tsz2=fitSize(x,(d.titre||"").split("\n")[0],F.h,F.hw,W*0.11,(W-2*m)/s,26);
-      function nl2(str,size,fam,wt){return str?wrap(x,str,wt+" "+Math.round(size*s)+"px "+fam,W-2*m-W*0.12).length*Math.round(size*s)*1.18:0;}
-      var hh2=nl2(d.sous,W*0.036,F.b,"italic")+(d.sous?W*0.008*s:0)+nl2(d.titre,tsz2,F.h,F.hw),hdr=Math.max(H*0.15,hh2+W*0.07);
+      var cpd=ST.photo?W*0.16:0,crs=0,cex=ST.photo?cpd+W*0.03:0;
+      var tsz2=fitSize(x,(d.titre||"").split("\n")[0],F.h,F.hw,W*0.11,(W-2*m-W*0.12)/s,26);
+      function nl2(str,size,fam,wt){return str?wrap(x,str,wt+" "+Math.round(size*s)+"px "+fam,W-2*m-W*0.12-2*crs).length*Math.round(size*s)*1.18:0;}
+      var hh2=nl2(d.sous,W*0.036,F.b,"italic")+(d.sous?W*0.008*s:0)+nl2(d.titre,tsz2,F.h,F.hw),hdr=Math.max(H*0.15,hh2+W*0.07+cex),kk=1;if(hdr>H*0.3){hdr=H*0.3;kk=1;var bud=hdr-W*0.07-cex,hk;while(kk>0.3){hk=nl2(d.sous,W*0.036*kk,F.b,"italic")+(d.sous?W*0.008*s:0)+nl2(d.titre,tsz2*kk,F.h,F.hw);if(hk<=bud)break;kk-=0.05;}hh2=hk;}
       x.fillStyle=isLux(FX)?P.ac2:P.ac;x.fillRect(0,0,W,hdr);x.fillStyle=P.ac2;x.globalAlpha=.22;x.beginPath();x.arc(W,0,W*.35,0,7);x.fill();x.globalAlpha=1;
-      y=Math.max(H*0.012,(hdr-hh2)/2);
-      var m2=m;m=m+W*0.06;T(d.sous,W*0.036,F.b,"italic","rgba(255,255,255,.93)",W*0.008,null,"center");T(d.titre,tsz2,F.h,F.hw,"#ffffff",0,null,"center");m=m2;
-      if(LOGOIMG&&ST.logo){var ls=hdr*0.5,rl=Math.min(ls/LOGOIMG.width,ls/LOGOIMG.height);x.fillStyle="rgba(255,255,255,.96)";roundRect(x,W*0.03,hdr*0.25-6,LOGOIMG.width*rl+12,LOGOIMG.height*rl+12,14);x.fill();x.drawImage(LOGOIMG,W*0.03+6,hdr*0.25,LOGOIMG.width*rl,LOGOIMG.height*rl);}
+      y=Math.max(H*0.012,(hdr-hh2-cex)/2)+cex;var yh=y-cex;
+      var m2=m;m=m+W*0.06;T(d.sous,W*0.036*kk,F.b,"italic","rgba(255,255,255,.93)",W*0.008,null,"center");T(d.titre,tsz2*kk,F.h,F.hw,"#ffffff",0,null,"center");m=m2;
+      if(ST.photo)circlePhoto(x,ST.photo,W/2,yh+cpd/2+W*0.005,cpd/2,"#ffffff",P.ac2);
+      if(LOGOIMG&&ST.logo){var ls=hdr*(ST.photo?0.3:0.5),rl=Math.min(ls/LOGOIMG.width,ls/LOGOIMG.height),lw3=LOGOIMG.width*rl,lx3=W*0.03;x.fillStyle="rgba(255,255,255,.96)";roundRect(x,lx3,hdr/2-LOGOIMG.height*rl/2-6,lw3+12,LOGOIMG.height*rl+12,14);x.fill();x.drawImage(LOGOIMG,lx3+6,hdr/2-LOGOIMG.height*rl/2,lw3,LOGOIMG.height*rl);}
       var hasDet=when.length||det.length,gTop=hdr+W*0.03,gBot=H*(hasDet?0.66:0.80),gap=W*0.025;
       var cols=n===1?1:(n===2||n===4?2:3),rows=Math.ceil(n/cols),cw2=(W-2*m*0.6-gap*(cols-1))/cols,ch2=Math.min((gBot-gTop-gap*(rows-1))/rows,cw2*(n===1?1.0:1.25));
       if(n===1)cw2=Math.min(cw2,(gBot-gTop)/1.0);
@@ -1118,7 +1120,7 @@ function drawPosterWide(cfg,d){
   var det=(d.details||"").split("\n").map(function(s){return s.trim();}).filter(Boolean),when=[d.date,d.lieu].filter(Boolean);
   if((d.libre||"").trim())det=det.concat(d.libre.split("\n").map(function(s){return s.trim();}).filter(Boolean));
   var barH=d.contact?u*0.14:0,top=u*0.09,bot=H-u*0.09-(barH?barH+u*0.03:0),availH=bot-top,left=u*0.11,right=W-u*0.11;
-  var hasPh=!!ST.photo,x0=left,fzw=0;
+  var GW=(ST.gal||[]).filter(function(g){return g.im;}),gH=GW.length?availH*0.36:0;availH-=gH?gH+u*0.03:0;var hasPh=!!ST.photo,x0=left,fzw=0;
   if(hasPh){var fz=pFit(ST.photo,Math.min(W*0.36,availH*1.2),availH*0.98);fzw=fz[0];framePhoto(x,ST.photo,left+fz[0]/2,top+availH/2,fz[0],fz[1],ac,bgc);x0=left+fz[0]+u*0.14;}
   var tw=right-x0,xc=hasPh?x0:x0+tw/2,al=hasPh?"left":"center";
   var blocks=[[d.sous,0.062,F.b,"italic",fg,0.02],[d.titre,0.17,F.h,F.hw,ac,0.03]].concat(when.map(function(t){return [t,0.072,F.h,"bold",fg,0.01];})).concat(det.map(function(t){return [t,0.058,F.b,"normal",fg,0.008];}));
@@ -1127,6 +1129,11 @@ function drawPosterWide(cfg,d){
   function wok(L){return L.out.every(function(b){x.font=b.f;return b.ls.every(function(l,i){return true;})&&b.words.every(function(w){return x.measureText(w).width<=tw;});});}
   var s=1.4,L=layout(s);while((L.h>availH||!wok(L))&&s>0.25){s-=0.05;L=layout(s);}
   var y=top+Math.max(0,(availH-L.h)/2);x.textBaseline="top";x.textAlign=al;
+  if(GW.length){var gy=top+availH+u*0.03,gp2=u*0.02,gcw=Math.min((right-left-(GW.length-1)*gp2)/GW.length,gH*1.2),gtot=gcw*GW.length+gp2*(GW.length-1),gx=left+(right-left-gtot)/2;
+    GW.forEach(function(g,i){var cx=gx+i*(gcw+gp2),capH=g.cap?gH*0.24:0;x.save();x.shadowColor="rgba(0,0,0,.2)";x.shadowBlur=10;x.fillStyle="#fff";roundRect(x,cx,gy,gcw,gH,u*0.02);x.fill();x.restore();
+      x.save();roundRect(x,cx,gy,gcw,gH,u*0.02);x.clip();contain(x,g.im,cx+4,gy+4,gcw-8,gH-capH-8);x.restore();
+      if(g.cap){var cp=g.cap.split("|"),ns=Math.round(Math.min(gH*0.11,gcw*0.12));x.textAlign="center";x.textBaseline="top";x.font="bold "+ns+"px "+F.h;x.fillStyle=P.fg;x.fillText((wrap(x,cp[0].trim(),x.font,gcw-10)[0])||"",cx+gcw/2,gy+gH-capH+2);if(cp[1]){x.font="bold "+Math.round(ns*0.9)+"px "+F.b;x.fillStyle=P.ac;x.fillText(cp[1].trim(),cx+gcw/2,gy+gH-capH+2+ns*1.2);}}});
+    x.textBaseline="top";x.textAlign=al;}
   L.out.forEach(function(b){x.font=b.f;x.fillStyle=b.col;b.ls.forEach(function(l,i){x.fillText(l,xc,y+i*b.px*1.18);});y+=b.ls.length*b.px*1.18+b.gap;});
   if(d.contact){var by=H-u*0.09-barH;x.fillStyle=ac;x.fillRect(fr*1.6+u*0.01,by,W-3.2*fr-u*0.02,barH);
     var px=fitSize(x,d.contact,F.b,"bold",Math.round(barH*0.5),W*0.8,10);x.font="bold "+px+"px "+F.b;x.fillStyle=dark?P.ac:P.bg;x.textAlign="center";x.textBaseline="middle";x.fillText(d.contact,W/2,by+barH/2);}
@@ -1862,6 +1869,120 @@ function editor(){
   pane();renderAll();
 }
 function pane(){pane0();stepsUI();}
+/* ============ Idées de textes (propositions selon le service et le secteur) ============ */
+var SUG=(function(){
+  var SEC=[
+   {id:"parf",n:"Parfums & cosmétiques",prod:"parfums",det:["Parfums pour homme et femme","Marques originales · Coffrets cadeaux","Livraison rapide dans toute la ville"],srv:["Parfums femme | dès {prix}","Parfums homme | dès {prix}","Coffrets cadeaux | dès {prix}","Huiles parfumées","Livraison à domicile"],poste:"Conseillère parfums",slo:"Laissez votre sillage parler pour vous"},
+   {id:"mode",n:"Mode & vêtements",prod:"vêtements et accessoires",det:["Robes · Ensembles · Chaussures · Sacs","Tissus pagne et modèles sur mesure","Tailles disponibles du S au XXL"],srv:["Robes | dès {prix}","Ensembles pagne | dès {prix}","Chaussures | dès {prix}","Sacs et accessoires","Couture sur mesure"],poste:"Styliste",slo:"L'élégance à votre mesure"},
+   {id:"resto",n:"Restaurant & maquis",prod:"repas",det:["Plats du jour · Grillades · Boissons","Sur place, à emporter ou en livraison","Commandes pour cérémonies et événements"],srv:["Plat du jour | {prix}","Poulet braisé | {prix}","Riz sauce | {prix}","Poisson grillé | {prix}","Boissons | dès {prix}"],poste:"Gérant",slo:"Le goût qui vous fait revenir"},
+   {id:"beau",n:"Coiffure, beauté & soins",prod:"coiffure et soins",det:["Tresses · Perruques · Soins du visage","Manucure · Pédicure · Maquillage","Sur rendez-vous, accueil soigné"],srv:["Tresses | dès {prix}","Perruque posée | dès {prix}","Soin du visage | {prix}","Manucure | {prix}","Maquillage | dès {prix}"],poste:"Coiffeuse professionnelle",slo:"Révélez votre beauté"},
+   {id:"tel",n:"Téléphones & électronique",prod:"téléphones et accessoires",det:["Smartphones neufs et d'occasion","Chargeurs · Écouteurs · Coques · Écrans","Réparation rapide et garantie"],srv:["Smartphones | dès {prix}","Écouteurs | dès {prix}","Chargeurs | dès {prix}","Réparation d'écran | {prix}","Accessoires"],poste:"Technicien",slo:"La technologie à votre portée"},
+   {id:"alim",n:"Alimentation & boutique",prod:"produits alimentaires",det:["Riz · Huile · Sucre · Lait · Conserves","Vente en gros et en détail","Livraison possible à domicile"],srv:["Riz (sac) | {prix}","Huile | {prix}","Sucre | {prix}","Lait et conserves","Livraison à domicile"],poste:"Commerçant",slo:"La qualité au bon prix"},
+   {id:"immo",n:"Immobilier & terrains",prod:"terrains et maisons",det:["Parcelles lotties avec papiers en règle","Maisons à vendre et à louer","Visite gratuite sur rendez-vous"],srv:["Parcelles | dès {prix}","Villas à vendre","Maisons à louer | dès {prix}","Gestion de biens","Visite gratuite"],poste:"Agent immobilier",slo:"Votre futur chez-vous commence ici"},
+   {id:"auto",n:"Auto, moto & garage",prod:"services auto",det:["Mécanique · Vidange · Freins · Pneus","Diagnostic et dépannage rapide","Pièces d'origine disponibles"],srv:["Vidange | {prix}","Freins | dès {prix}","Pneus | dès {prix}","Diagnostic | {prix}","Dépannage"],poste:"Mécanicien",slo:"Votre véhicule entre de bonnes mains"},
+   {id:"ecol",n:"École & formation",prod:"formations",det:["Inscriptions ouvertes · Places limitées","Formateurs qualifiés · Certificat délivré","Cours du jour et du soir"],srv:["Informatique | {prix}","Anglais | {prix}","Couture | {prix}","Comptabilité | {prix}","Certificat délivré"],poste:"Directeur",slo:"Se former, c'est réussir"},
+   {id:"asso",n:"Église, association & événement",prod:"événement",det:["Entrée libre · Venez en famille","Chants · Enseignements · Moments de partage","Invitez vos proches"],srv:["Culte / réunion","Prière","Jeunesse","Enfants","Actions sociales"],poste:"Président",slo:"Ensemble, plus forts"},
+   {id:"gen",n:"Autre activité",prod:"produits et services",det:["Des produits et services de qualité","Accueil chaleureux et prix accessibles","Contactez-nous pour plus de détails"],srv:["Produit ou service 1 | {prix}","Produit ou service 2 | {prix}","Produit ou service 3 | {prix}","Livraison possible"],poste:"Gérant",slo:"Qualité et confiance"}
+  ];
+  var OCC=[
+   {id:"promo",n:"Promotion",sous:["{nom} vous offre","Grande promotion"],titre:"PROMO SUR NOS {PROD}",date:["Jusqu'au {date}","Offre valable cette semaine seulement"],libre:"-20 % sur tout le magasin !\nProfitez-en avant la fin de l'offre",appel:"Appelez-nous dès maintenant !"},
+   {id:"ouv",n:"Ouverture",sous:["{nom} est heureux de vous annoncer","Grande ouverture"],titre:"GRANDE OUVERTURE",date:["{date}","Ce samedi à partir de 9h"],libre:"Cadeaux et réductions pour les 50 premiers clients",appel:"Venez nombreux !"},
+   {id:"nouv",n:"Nouveautés",sous:["{nom} présente","Nouvel arrivage"],titre:"NOUVEL ARRIVAGE",date:["Disponible dès le {date}","Disponible dès maintenant"],libre:"Quantités limitées, premiers servis",appel:"Commandez vite !"},
+   {id:"fete",n:"Fêtes (Tabaski, Noël, Pâques…)",sous:["{nom} vous souhaite de bonnes fêtes","Spécial fêtes"],titre:"OFFRES DE FÊTE",date:["Du {date}","Jusqu'à la veille de la fête"],libre:"Des cadeaux pour ceux que vous aimez\nLivraison avant la fête",appel:"Passez votre commande !"},
+   {id:"liv",n:"Commande & livraison",sous:["{nom} vous livre","Livraison à domicile"],titre:"COMMANDEZ, ON VOUS LIVRE",date:["Livraison tous les jours","Livraison 7j/7"],libre:"Paiement à la livraison possible\nLivraison rapide dans toute la ville",appel:"Écrivez-nous sur WhatsApp"}
+  ];
+  var CER={
+   mariage:[
+    {id:"inv",n:"Invitation classique",sous:"Ensemble avec leurs familles, ont la joie de vous inviter à leur mariage",titre:["{nom}","Les futurs mariés"],date:["{date}",""],lieu:["{lieu}",""],details:"Cérémonie civile\nBénédiction nuptiale\nRéception à suivre\nTenue de soirée souhaitée",libre:"Votre présence sera notre plus beau cadeau",contact:["Confirmez votre présence : {tel}",""]},
+    {id:"rel",n:"Bénédiction religieuse",sous:"Les familles vous convient à la bénédiction nuptiale de",titre:["{nom}","Les futurs mariés"],date:["{date}",""],lieu:["{lieu}",""],details:"Accueil des invités\nCérémonie religieuse\nVin d'honneur",libre:"Que Dieu bénisse cette union",contact:["Renseignements : {tel}",""]},
+    {id:"mer",n:"Remerciements",sous:"Les familles et les mariés vous disent",titre:"MERCI !",date:["",""],lieu:["",""],details:"Pour votre présence, vos prières,\nvos cadeaux et vos messages d'affection",libre:"Que Dieu vous le rende au centuple",contact:["",""]}],
+   bapteme:[
+    {id:"bap",n:"Baptême",sous:"Les parents ont la joie de vous inviter au baptême de",titre:["{nom}","Notre petit ange"],date:["{date}",""],lieu:["{lieu}",""],details:"Célébration\nPartage du repas en famille",libre:"Venez partager ce moment de bonheur",contact:["Confirmez votre présence : {tel}",""]},
+    {id:"enf",n:"Anniversaire d'enfant",sous:"Tu es invité à la fête d'anniversaire de",titre:["{nom} a {age}","Joyeux anniversaire !"],date:["{date}",""],lieu:["{lieu}",""],details:"Jeux · Gâteau · Surprises\nVenez avec votre bonne humeur",libre:"",contact:["Réponse avant la fête : {tel}",""]},
+    {id:"adu",n:"Anniversaire d'adulte",sous:"Vous êtes cordialement invités à célébrer l'anniversaire de",titre:["{nom}","Joyeux anniversaire"],date:["{date}",""],lieu:["{lieu}",""],details:"Dîner et soirée dansante\nTenue élégante",libre:"",contact:["Confirmez votre présence : {tel}",""]},
+    {id:"com",n:"Communion / confirmation",sous:"Nous avons la joie de vous inviter à la première communion de",titre:["{nom}","Première communion"],date:["{date}",""],lieu:["{lieu}",""],details:"Messe d'action de grâce\nRéception familiale",libre:"",contact:["Renseignements : {tel}",""]}],
+   deces:[
+    {id:"ann",n:"Annonce de décès",sous:"La famille a la profonde douleur de vous faire part du décès de",titre:["{nom}","Le défunt"],date:["{date}",""],lieu:["{lieu}",""],details:"La veillée de prières et l'inhumation\nseront annoncées prochainement",libre:"Que son âme repose en paix",contact:["Contact de la famille : {tel}",""]},
+    {id:"rem",n:"Remerciements",sous:"La famille éplorée remercie sincèrement toutes les personnes qui l'ont soutenue lors du décès de",titre:["{nom}","Merci"],date:["",""],lieu:["",""],details:"Pour vos prières, vos visites,\nvotre soutien moral et matériel",libre:"Que Dieu vous bénisse",contact:["",""]},
+    {id:"mes",n:"Messe / souvenir",sous:"En mémoire de",titre:["{nom}","Notre bien-aimé"],date:["{date}",""],lieu:["{lieu}",""],details:"Une messe d'action de grâce sera célébrée\nPrions ensemble pour le repos de son âme",libre:"Tu resteras à jamais dans nos cœurs",contact:["Contact : {tel}",""]}]
+  };
+  var OTH={
+   certif:[
+    {id:"for",n:"Fin de formation",titre:"CERTIFICAT",sous:"de fin de formation",motif:"a suivi avec assiduité et réussi la formation complète. Ce certificat lui est délivré pour servir et valoir ce que de droit."},
+    {id:"par",n:"Participation",titre:"ATTESTATION",sous:"de participation",motif:"a pris part avec engagement à l'activité organisée. Cette attestation lui est remise pour servir et valoir ce que de droit."},
+    {id:"mer",n:"Mérite / félicitations",titre:"DIPLÔME D'HONNEUR",sous:"de mérite",motif:"pour son travail remarquable, son sérieux et son dévouement. Toutes nos félicitations."}],
+   badge:[
+    {id:"mem",n:"Membre",role:"Membre"},{id:"par",n:"Participant",role:"Participant"},{id:"sta",n:"Organisateur / staff",role:"Organisateur"},{id:"ele",n:"Élève / étudiant",role:"Élève"},{id:"ben",n:"Bénévole",role:"Bénévole"}],
+   facture:[
+    {id:"liv",n:"Paiement à la livraison",mention:"Paiement à la livraison. Merci de votre confiance."},
+    {id:"acp",n:"Acompte 50 %",mention:"Acompte de 50 % à la commande, solde à la livraison. Merci de votre confiance."},
+    {id:"com",n:"Paiement comptant",mention:"Paiement comptant à la réception. Les marchandises vendues ne sont ni reprises ni échangées."}]
+  };
+  var KIND={affiche:"com",flyer:"com",statut:"com",promo:"promo",carte:"carte",menu:"menu",mariage:"cer",bapteme:"cer",deces:"cer",certif:"oth",badge:"oth",facture:"oth"};
+  function has(id){return !!KIND[id];}
+  function pick(a,v){var arr=Array.isArray(a)?a:[a],i;for(i=0;i<arr.length;i++){var r=fill(arr[i],v);if(r!==null)return r;}return "";}
+  function fill(t,v){if(t==null)return null;var miss=false,out=String(t).replace(/\{(\w+)\}/g,function(m,k){var x=(v[k]||"").trim();if(!x){miss=true;return "";}return x;});return miss?null:out;}
+  function fillLines(t,v){return String(t).split("\n").map(function(l){return fill(l,v);}).filter(function(l){return l!==null&&l!=="";}).join("\n");}
+  function srvLines(S,v){return S.srv.map(function(l){return v.prix?l.replace("{prix}",v.prix):l.replace(/\s*\|\s*(dès\s*)?\{prix\}/,"");}).join("\n");}
+  function sec(id){for(var i=0;i<SEC.length;i++)if(SEC[i].id===id)return SEC[i];return SEC[0];}
+  function vars(svc){var k=KIND[svc];if(k==="com")return OCC;if(k==="cer")return CER[svc];if(k==="oth")return OTH[svc];if(k==="promo")return [{id:"std",n:"Présentation"},{id:"pro",n:"Promotion"},{id:"ouv",n:"Ouverture"}];return [];}
+  function make(svc,secId,varId,v){
+    var k=KIND[svc],S=sec(secId),V=vars(svc).filter(function(x){return x.id===varId;})[0]||vars(svc)[0],o={},vv={};
+    for(var q in v)vv[q]=v[q];vv.PROD=(S.prod||"").toUpperCase();vv.prod=S.prod;
+    if(k==="com"){
+      o.sous=pick(V.sous,vv);o.titre=fill(V.titre,vv)||V.titre.replace(/\{\w+\}/g,"").trim();o.titre=o.titre.replace(/\{PROD\}/,"").trim();
+      o.date=pick(V.date,vv);o.lieu=vv.lieu||"";o.details=fillLines(S.det.join("\n"),vv);o.libre=V.libre;o.contact=vv.tel||"";
+      if(vv.prix)o.libre=(V.id==="promo"?"":"")+ "À partir de "+vv.prix+"\n"+V.libre;
+      o.titre=(V.titre||"").replace("{PROD}",(S.prod||"").toUpperCase());}
+    else if(k==="cer"){o.sous=V.sous;o.titre=pick(V.titre,vv);o.date=pick(V.date,vv);o.lieu=pick(V.lieu,vv);o.details=V.details;o.libre=V.libre;o.contact=pick(V.contact,vv);}
+    else if(k==="promo"){
+      var intro={std:"Découvrez nos "+S.prod,pro:"Promotion sur nos "+S.prod,ouv:"Grande ouverture : "+S.prod};
+      o.intro=intro[V.id];o.serv=srvLines(S,vv);
+      o.appel=V.id==="ouv"?"Venez nombreux !":(V.id==="pro"?"Offre limitée, appelez vite !":"Appelez-nous dès maintenant !");
+      o.slogan=S.slo;o.contact=vv.tel||"";if(vv.nom)o.titre=vv.nom;}
+    else if(k==="carte"){o.poste=S.poste;o.slogan=S.slo;if(vv.nom)o.ent=vv.nom;if(vv.tel)o.tel=vv.tel;if(vv.lieu)o.adr=vv.lieu;}
+    else if(k==="menu"){o.sous=S.slo;o.items=srvLines(S,vv);if(vv.nom)o.titre=vv.nom;if(vv.tel)o.contact=vv.tel;}
+    else if(k==="oth"){for(var z in V)if(z!=="id"&&z!=="n")o[z]=V[z];if(svc==="certif"&&vv.nom)o.org=vv.nom;if(svc==="badge"&&vv.nom)o.org=vv.nom;}
+    Object.keys(o).forEach(function(z){if(!o[z]||!String(o[z]).trim())delete o[z];});
+    return o;}
+  var MEM={};
+  function formKeys(svc){var k=KIND[svc];
+    if(k==="com")return ["nom","tel","lieu","prix","date"];
+    if(k==="cer")return svc==="bapteme"?["nom","age","date","lieu","tel"]:["nom","date","lieu","tel"];
+    if(k==="promo")return ["nom","tel","prix"];if(k==="carte")return ["nom","tel","lieu"];if(k==="menu")return ["nom","tel","prix"];
+    if(svc==="certif"||svc==="badge")return ["nom"];return [];}
+  var LAB={nom:"Nom (client / boutique)",tel:"Téléphone / WhatsApp",lieu:"Lieu / adresse",prix:"Prix de départ (ex : 5 000 FCFA)",date:"Date ou période",age:"Âge (ex : 5 ans)"};
+  function labFor(svc,k){if(k==="nom"&&KIND[svc]==="cer")return svc==="deces"?"Nom du défunt":(svc==="mariage"?"Noms des mariés (ex : Awa & Ibrahim)":"Nom de la personne");if(k==="nom"&&(svc==="certif"||svc==="badge"))return "Organisation";return LAB[k];}
+  function open(){
+    var svc=CUR.id,K=KIND[svc];if(!K)return;
+    var old=document.querySelector(".ovl");if(old)old.remove();
+    var vs=vars(svc),m=MEM[ACT+"|"+svc]||{sec:K==="cer"||K==="oth"?"":"parf",vr:vs[0]&&vs[0].id,v:{},mode:"empty"};
+    if(!m.v.nom&&BR&&!BR.me){m.v.nom=m.v.nom||BR.nom||"";m.v.tel=m.v.tel||BR.tel||"";m.v.lieu=m.v.lieu||BR.adr||"";}
+    var ov=document.createElement("div");ov.className="ovl";ov.style.cssText="position:fixed;inset:0;background:var(--bg);color:var(--tx);z-index:50;overflow:auto;padding:14px;-webkit-overflow-scrolling:touch";
+    var useSec=(K==="com"||K==="promo"||K==="carte"||K==="menu"),FK=formKeys(svc);
+    var h='<div style="max-width:560px;margin:0 auto"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">💡 Idées de textes</b><button class="btn sec" id="sg_x">✕ Fermer</button></div><div class="hint" style="margin:6px 0 10px">Choisis, vérifie, puis garde ou remplace. Tu pourras tout modifier ensuite.</div>';
+    if(useSec)h+='<label>Secteur du client</label><select id="sg_sec">'+SEC.map(function(s){return '<option value="'+s.id+'"'+(s.id===m.sec?" selected":"")+'>'+esc(s.n)+'</option>';}).join("")+'</select>';
+    if(vs.length)h+='<label>'+(K==="com"||K==="promo"?"Type de message":"Modèle")+'</label><select id="sg_var">'+vs.map(function(s){return '<option value="'+s.id+'"'+(s.id===m.vr?" selected":"")+'>'+esc(s.n)+'</option>';}).join("")+'</select>';
+    FK.forEach(function(k){h+='<label>'+esc(labFor(svc,k))+' <span class="hint">(facultatif)</span></label><input type="text" data-sg="'+k+'" value="'+esc(m.v[k])+'">';});
+    h+='<label>Aperçu des propositions</label><div id="sg_pv" class="note" style="margin-top:4px;white-space:pre-wrap"></div>';
+    h+='<div class="seg" id="sg_md" style="margin-top:10px"><button data-m="empty">Compléter les champs vides</button><button data-m="all">Tout remplacer</button></div>';
+    h+='<button class="btn full" id="sg_ok">✅ Utiliser ces textes</button></div>';
+    ov.innerHTML=h;document.body.appendChild(ov);
+    function cur(){var v={};Array.prototype.forEach.call(ov.querySelectorAll("[data-sg]"),function(i){v[i.getAttribute("data-sg")]=i.value.trim();});
+      var s=ov.querySelector("#sg_sec"),r=ov.querySelector("#sg_var");m.sec=s?s.value:"";m.vr=r?r.value:"";m.v=v;MEM[ACT+"|"+svc]=m;return make(svc,m.sec,m.vr,v);}
+    function fl(k){var f=CUR.fields.filter(function(x){return x.k===k;})[0];return f;}
+    function pv(){var o=cur(),t="";Object.keys(o).forEach(function(k){var f=fl(k);if(f)t+=(f.l||k)+" :\n"+o[k]+"\n\n";});ov.querySelector("#sg_pv").textContent=t.trim()||"Aucune proposition pour ce choix.";}
+    function mdUI(){Array.prototype.forEach.call(ov.querySelectorAll("#sg_md button"),function(b){b.classList.toggle("on",b.getAttribute("data-m")===m.mode);});}
+    Array.prototype.forEach.call(ov.querySelectorAll("select,input"),function(e){e.addEventListener("input",pv);e.addEventListener("change",pv);});
+    Array.prototype.forEach.call(ov.querySelectorAll("#sg_md button"),function(b){b.onclick=function(){m.mode=b.getAttribute("data-m");mdUI();};});
+    ov.querySelector("#sg_x").onclick=function(){ov.remove();};
+    ov.querySelector("#sg_ok").onclick=function(){var o=cur(),n=0;
+      Object.keys(o).forEach(function(k){var f=fl(k);if(!f)return;var c=DATA[k];var vide=!c||!String(c).trim()||c===f.d;if(m.mode==="all"||vide){DATA[k]=o[k];n++;}});
+      ov.remove();later();pane();toast(n?n+" champ"+(n>1?"s":"")+" rempli"+(n>1?"s":""):"Rien à remplir : tes champs sont déjà écrits");};
+    mdUI();pv();}
+  return {open:open,has:has};
+})();
+
 function pane0(){
   Array.prototype.forEach.call(app.querySelectorAll(".tabs button"),function(b){b.classList.toggle("on",b.getAttribute("data-t")===TAB);});
   var p=document.getElementById("pane"),h="";
@@ -1871,6 +1992,7 @@ function pane0(){
     if(CUR.kind==="poster")PG.push("gal");
     if(CP>=PG.length)CP=0;
     if(PG.length>1&&!stepsOn())h+='<div class="steps" style="margin-top:2px">'+PG.map(function(_,i){return '<i'+(i<=CP?' class="on"':'')+'></i>';}).join("")+'</div><div class="hint" style="margin:-8px 0 4px">Partie '+(CP+1)+' sur '+PG.length+'</div>';
+    if(CP===0&&SUG.has(CUR.id))h+='<button class="btn sec full" id="sg_open" style="margin:0 0 12px">💡 Idées de textes pour ce service</button>';
     if(PG[CP]==="gal")h+=galHtml();
     (PG[CP]==="gal"?[]:PG[CP]).forEach(function(f){
       h+='<label>'+esc(f.l)+'</label>';
@@ -1892,6 +2014,7 @@ function pane0(){
         ct.textContent=w+(w>1?" mots":" mot")+" · "+n+" / "+lim+" caractères"+(n>lim?" — trop long : l'affiche sera chargée, raccourcis le texte.":(n>lim*0.8?" — bientôt trop long.":""));}
       ta.addEventListener("input",upd);upd();})();
     if(PG[CP]==="gal")galBind();
+    var sgo=document.getElementById("sg_open");if(sgo)sgo.onclick=function(){SUG.open();};
     var cpp=document.getElementById("cp_prev"),cpn=document.getElementById("cp_next");
     if(cpp)cpp.onclick=function(){CP=Math.max(0,CP-1);pane();try{window.scrollTo(0,0);}catch(e){}};
     if(cpn)cpn.onclick=function(){CP=Math.min(PG.length-1,CP+1);pane();try{window.scrollTo(0,0);}catch(e){}};

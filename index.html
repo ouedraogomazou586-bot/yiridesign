@@ -456,7 +456,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=56;var BACK=null;var CP=0,XP="img";
+var VER=58;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -629,6 +629,38 @@ function drawPoster(cfg,d){
       x.font=ff;x.fillStyle=tc;x.textBaseline="top";x.textAlign=al2;var xx=al2==="center"?W/2:m+(zb?W*0.035:0);
       lines.forEach(function(l,i){x.fillText(l,xx,y0+pad+i*lh);});
       y=y0+hh+2*pad+W*0.02*s;return tot;
+    }
+    if(ST.photo&&ST.gal&&ST.gal.filter(function(g){return g.im;}).length){
+      var G=ST.gal.filter(function(g){return g.im;}),n=G.length,mm=W*0.05,gap=W*0.025,barH=d.contact?W*0.14:0;
+      var hb=H*(n>4?0.34:0.38),dk=isLux(FX)?P.ac2:P.ac;
+      x.fillStyle=dk;x.fillRect(0,0,W,hb);x.fillStyle=P.ac2;x.globalAlpha=.22;x.beginPath();x.arc(W,0,W*.35,0,7);x.fill();x.globalAlpha=1;
+      x.fillStyle=P.ac;x.fillRect(0,hb,W,W*0.012);
+      var fzp=pFit(ST.photo,W*0.42,hb*0.88,0.45,1.9),px0=mm+W*0.01,py0=(hb-fzp[1])/2;
+      framePhoto(x,ST.photo,px0+fzp[0]/2,py0+fzp[1]/2,fzp[0],fzp[1],"#ffffff",dk);
+      var tx=px0+fzp[0]+W*0.045,tw=W-mm-tx;
+      var dets=when.concat(det);if((d.libre||"").trim())dets=dets.concat(d.libre.split("\n").map(function(t){return t.trim();}).filter(Boolean));
+      var blk=[[d.sous,W*0.034,F.b,"italic","rgba(255,255,255,.93)",W*0.008],[d.titre,W*0.085,F.h,F.hw,"#ffffff",W*0.016]].concat(dets.map(function(t,i){return [t,i<when.length?W*0.038:W*0.032,i<when.length?F.h:F.b,i<when.length?"bold":"normal","rgba(255,255,255,.96)",W*0.006];})).filter(function(b){return b[0];});
+      function lay2(k){var h=0,o=[];blk.forEach(function(b){var px=Math.round(b[1]*k),f=b[3]+" "+px+"px "+b[2],ls=wrap(x,b[0],f,tw);o.push({ls:ls,px:px,f:f,c:b[4],g:b[5]*k});h+=ls.length*px*1.18+b[5]*k;});return {h:h,o:o};}
+      var kk=1.3,LL=lay2(kk);function ovw(L){var bad=false;L.o.forEach(function(b){x.font=b.f;b.ls.forEach(function(l){if(x.measureText(l).width>tw+1)bad=true;});b.ls.forEach(function(l,i){if(i<b.ls.length-1&&b.ls[i+1]&&/\S$/.test(l)&&/^\S/.test(b.ls[i+1])&&b.ls[i+1].length<4)bad=true;});});return bad;}
+      function brk(L){var bad=false;L.o.forEach(function(b){var wd=(b.f&&0);});return bad;}
+      function wordcut(k){var bad=false;blk.forEach(function(b){var px=Math.round(b[1]*k);x.font=b[3]+" "+px+"px "+b[2];b[0].split(/\s+/).forEach(function(w){if(x.measureText(w).width>tw)bad=true;});});return bad;}
+      while((LL.h>hb*0.86||ovw(LL)||wordcut(kk))&&kk>0.3){kk-=0.05;LL=lay2(kk);}
+      var ty=(hb-LL.h)/2;x.textAlign="left";x.textBaseline="top";
+      LL.o.forEach(function(b){x.font=b.f;x.fillStyle=b.c;b.ls.forEach(function(l,i){x.fillText(l,tx,ty+i*b.px*1.18);});ty+=b.ls.length*b.px*1.18+b.g;});
+      if(LOGOIMG&&ST.logo){var ls0=hb*0.2,rl0=Math.min(ls0/LOGOIMG.width,ls0/LOGOIMG.height),lw0=LOGOIMG.width*rl0,lh0=LOGOIMG.height*rl0;x.fillStyle="rgba(255,255,255,.96)";roundRect(x,W-mm-lw0-12,W*0.02,lw0+12,lh0+12,12);x.fill();x.drawImage(LOGOIMG,W-mm-lw0-6,W*0.02+6,lw0,lh0);}
+      var gT=hb+W*0.04,gB=H-(barH?barH+W*0.025:W*0.04),cols=n===1?1:(n<=4?2:3),rows=Math.ceil(n/cols);
+      var cw3=(W-2*mm-gap*(cols-1))/cols,ch3=(gB-gT-gap*(rows-1))/rows;if(n===1){cw3=Math.min(cw3,(gB-gT)*1.05);}ch3=Math.min(ch3,cw3*1.5);
+      var uh=ch3*rows+gap*(rows-1),gy1=gT+Math.max(0,(gB-gT-uh)/2);
+      G.forEach(function(g,i){
+        var r=Math.floor(i/cols),inRow=(r===rows-1)?(n-r*cols):cols,cx=(W-(inRow*cw3+(inRow-1)*gap))/2+(i-r*cols)*(cw3+gap),cy=gy1+r*(ch3+gap),hasC=!!g.cap,capH=hasC?Math.min(ch3*0.22,W*0.11):0,ih=ch3-capH;
+        x.save();x.shadowColor="rgba(0,0,0,.22)";x.shadowBlur=16;x.shadowOffsetY=5;x.fillStyle="#fff";roundRect(x,cx,cy,cw3,ch3,22);x.fill();x.restore();
+        x.save();roundRect(x,cx,cy,cw3,ch3,22);x.clip();x.beginPath();x.rect(cx,cy,cw3,ih);x.clip();x.fillStyle="#ffffff";x.fillRect(cx,cy,cw3,ih);contain(x,g.im,cx+6,cy+6,cw3-12,ih-10);x.restore();
+        if(hasC){var cp=g.cap.split("|"),nm=cp[0].trim(),pr=(cp[1]||"").trim(),nsz=Math.round(Math.min(W*0.042,capH*(pr?0.4:0.5)));
+          x.textAlign="center";x.textBaseline="middle";x.font="bold "+fitSize(x,nm,F.h,"bold",nsz,cw3-18,12)+"px "+F.h;x.fillStyle=P.fg;x.fillText(nm,cx+cw3/2,cy+ih+capH*(pr?0.3:0.5));
+          if(pr){x.font="bold "+fitSize(x,pr,F.b,"bold",Math.round(nsz*1.05),cw3-18,12)+"px "+F.b;x.fillStyle=P.ac;x.fillText(pr,cx+cw3/2,cy+ih+capH*0.72);}}
+      });
+      if(d.contact){x.fillStyle=P.ac;x.fillRect(0,H-barH,W,barH);x.font="bold "+fitSize(x,d.contact,F.b,"bold",Math.round(W*.05),W*0.9,14)+"px "+F.b;x.fillStyle=isLux(FX)?P.bg:"#ffffff";x.textAlign="center";x.textBaseline="middle";x.fillText(d.contact,W/2,H-barH/2);}
+      return -1;
     }
     if((ST.lay===2||(ST.gal&&ST.gal.filter(function(g){return g.im;}).length))&&ST.gal&&ST.gal.filter(function(g){return g.im;}).length){
       var G=ST.gal.filter(function(g){return g.im;}),n=G.length;

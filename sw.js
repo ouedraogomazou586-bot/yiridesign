@@ -1,4 +1,4 @@
-const V="yiri-v58";
+const V="yiri-v63";
 const FILES=["./","index.html","manifest.webmanifest","ic192.png","ic512.png"];
 // Mise en cache tolérante : un fichier manquant n'empêche plus l'installation hors connexion
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));});

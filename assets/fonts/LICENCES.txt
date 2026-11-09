@@ -1,0 +1,3 @@
+Polices intégrées à YiriDesign : toutes sous licence SIL Open Font License 1.1 (utilisation libre, y compris commerciale ; vente de la police seule interdite).
+Poppins, Lora, Crimson Pro, Libre Baskerville, Gloock, Big Shoulders, Erica One, Poiret One, Italiana, Outfit, Work Sans, Bricolage Grotesque, Young Serif, Instrument Serif, Instrument Sans, Nothing You Could Do, Smooch Sans, Jura, National Park, IBM Plex Serif, Tektur, Boldonse.
+Texte de la licence : https://openfontlicense.org (copies fournies dans ce dossier quand elles existent).

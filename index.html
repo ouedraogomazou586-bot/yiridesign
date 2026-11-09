@@ -545,7 +545,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=95;var BACK=null;var CP=0,XP="img";
+var VER=96;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -1946,7 +1946,7 @@ function loadDraft(cfg){
 }
 
 /* ============ Vues ============ */
-function screen(t,back){banStop();CUR=null;BACK=back||null;ttl.textContent=t;backB.style.display="";document.getElementById("idb").style.display="none";document.getElementById("setb").style.display="none";document.getElementById("srchb").style.display="none";try{window.scrollTo(0,0);app.scrollTop=0;}catch(e){}}
+function screen(t,back){try{localStorage.removeItem("ac_last");}catch(e){}banStop();CUR=null;BACK=back||null;ttl.textContent=t;backB.style.display="";document.getElementById("idb").style.display="none";document.getElementById("setb").style.display="none";document.getElementById("srchb").style.display="none";try{window.scrollTo(0,0);app.scrollTop=0;}catch(e){}}
 function menuHtml(items){return '<div class="menu">'+items.map(function(m){return '<button class="mi" data-m="'+m[0]+'"><span class="i">'+m[1]+'</span><div><b>'+esc(m[2])+'</b><small>'+esc(m[3])+'</small></div><span class="ar">›</span></button>';}).join("")+'</div>';}
 function menuBind(fn){Array.prototype.forEach.call(app.querySelectorAll(".mi"),function(b){b.onclick=function(){fn(b.getAttribute("data-m"));};});}
 var BANT=null,BI=0;
@@ -2107,7 +2107,7 @@ var LASTCAT=null;
 var CATS=[["pub","📣","Publicité","Fiche publicitaire, affiches, statuts, flyers",["promo","affiche","statut","flyer"]],["cer","💍","Cérémonies","Mariage, baptême, anniversaire, décès",["mariage","bapteme","deces"]],["pro","💼","Professionnel","Carte de visite, facture, menu, badge, certificat",["carte","facture","menu","badge","certif"]],["mar","✨","Image de marque","Logo, photo de profil, mini-page",["logo","profil","page"]],["vid","🎬","Vidéo","Anime tes créations pour WhatsApp",["video"]]];
 function catIds(c){var used={};CATS.forEach(function(k){k[4].forEach(function(i){used[i]=1;});});var ids=c[4].filter(function(id){return SV[id]&&(SET.hide||[]).indexOf(id)<0;});if(c[0]==="vid")return ids;return ids;}
 function home(){
-  banStop();LASTCAT=null;CUR=null;BACK=null;ttl.textContent="YiriDesign";backB.style.display="none";document.getElementById("idb").style.display="";document.getElementById("setb").style.display="";document.getElementById("srchb").style.display="";try{window.scrollTo(0,0);}catch(e){}
+  try{localStorage.removeItem("ac_last");}catch(e){}banStop();LASTCAT=null;CUR=null;BACK=null;ttl.textContent="YiriDesign";backB.style.display="none";document.getElementById("idb").style.display="";document.getElementById("setb").style.display="";document.getElementById("srchb").style.display="";try{window.scrollTo(0,0);}catch(e){}
   var h=banHtml()+'<div class="note" style="margin:0 0 6px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>Fiche active : <b>'+esc(BR.me?'Moi':'Client')+(BR.nom?' · '+esc(BR.nom):'')+'</b></span><button class="btn sec" id="chg" style="padding:8px 12px">Changer</button></div>';
   var nd=0;try{nd=myDrafts().length;}catch(e){}
   if(nd)h+='<button class="btn sec full" id="mycr" style="margin:0 0 10px">📂 Mes créations ('+nd+')</button>';
@@ -2165,6 +2165,7 @@ function openSv(id){
   if(PHLOADING){toast("Préparation de ta photo…");setTimeout(function(){openSv(id);},700);return;}
   if(cfg.kind==="video"){videoScreen();return;}
   CUR=cfg;loadDraft(cfg);XM.reset();TAB="c";editor();
+  try{localStorage.setItem("ac_last",JSON.stringify({id:id,cat:LASTCAT||null}));}catch(e){}
 }
 function stepsOn(){return !window.__TABS&&SET.mode!=="tabs";}
 function cpages(){var PG=[],FL=CUR.fields,per=4;if(FL.length>6){for(var q=0;q<FL.length;q+=per)PG.push(FL.slice(q,q+per));}else PG=[FL];if(CUR.kind==="poster")PG.push("gal");return PG;}
@@ -3879,8 +3880,8 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
 /* Bouton « Retour » du téléphone : on revient d'un écran, ou on demande avant de quitter */
 (function(){
   var leaving=false,guard=true;
-  try{history.replaceState({yiri:0},"");history.pushState({yiri:1},"");}catch(e){guard=false;}
-  if(!guard)return;
+  var isNat=false;try{isNat=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());}catch(e){}
+  if(!isNat){try{history.replaceState({yiri:0},"");history.pushState({yiri:1},"");}catch(e){guard=false;}}
   function askQuit(){
     if(document.getElementById("yq"))return;
     var o=document.createElement("div");o.id="yq";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.style.cssText="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px";
@@ -3900,6 +3901,23 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
     setTimeout(function(){leaving=false;armed=true;try{history.pushState({yiri:1},"");}catch(e){}toast("Appuie sur le bouton d'accueil de ton téléphone pour fermer");},2600);
   }
   window.__askQuit=askQuit;
+  /* APK : le bouton Retour d'Android passe par le plugin « App » (pas d'historique de navigation) */
+  if(isNat){
+    var A=window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+    if(A&&A.addListener){
+      A.addListener("backButton",function(){
+        try{LOG.add("retour_telephone","natif");}catch(e){}
+        if(window.__bt){window.__bt();return;}
+        var q=document.getElementById("yq");if(q){q.remove();return;}
+        var vo=document.querySelector(".ovl");if(vo){vo.remove();return;}
+        if(backB.style.display!=="none"){backB.onclick();return;}
+        if(SET.confirmExit===false){quit();return;}
+        askQuit();
+      });
+    }
+    return;
+  }
+  if(!guard)return;
   /* Chrome ignore les entrées d'historique ajoutées sans toucher l'écran : on en ajoute une vraie dès qu'on touche */
   var armed=true;
   function arm(){ if(!armed||leaving)return;
@@ -4068,7 +4086,11 @@ var LIBU=(function(){
 })();
 document.getElementById("idb").onclick=identity;
 document.getElementById("setb").onclick=settings;document.getElementById("srchb").onclick=searchScreen;
-loadLogoImg(home,true);lockScreen();
+var LASTSCR=null;try{LASTSCR=JSON.parse(localStorage.getItem("ac_last")||"null");}catch(e){}
+loadLogoImg(function(){home();
+  /* on rouvre là où tu t'étais arrêté (si le service existe encore) */
+  try{if(LASTSCR&&LASTSCR.id&&SV[LASTSCR.id]&&SET.resume!==false&&!SV[LASTSCR.id].off&&SV[LASTSCR.id].kind!=="video"){LASTCAT=LASTSCR.cat||null;openSv(LASTSCR.id);}}catch(e){}
+},true);lockScreen();
 try{if(!NAT.is()&&"serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js");}catch(e){}
 window.__boot=1;
 </script>

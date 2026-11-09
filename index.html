@@ -74,7 +74,7 @@ img[style*="object-fit:cover"],.ba.ph:not(.cut){object-position:50% 12%}
 .hint{font-size:12.5px;color:var(--mut);margin-top:4px}
 .chk{display:flex;align-items:center;gap:10px;margin:14px 0;font-size:15px;color:var(--tx)}
 .chk input{width:22px;height:22px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;text-align:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;z-index:9999;max-width:90%;text-align:center}
 .err{background:#fee2e2;color:#7f1d1d;padding:10px 12px;font-size:13px;display:none}
 .thumbs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .thumbs canvas,.thumbs img{width:100%;height:auto;border:1px solid var(--bd);border-radius:6px;background:#fff}
@@ -529,7 +529,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=88;var BACK=null;var CP=0,XP="img";
+var VER=89;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3987,7 +3987,7 @@ var LIBU=(function(){
       Array.prototype.forEach.call(ov.querySelectorAll(".lbi"),function(b){b.onclick=function(){var f="assets/"+b.getAttribute("data-f");
         if(tab==="fonds"){var dc=b.getAttribute("data-c2"),dd=({"Afrique":-40,"Motifs":-30,"Formes":-20,"Textures":0})[dc];ST.fond={u:f,dim:ST.fond?ST.fond.dim||0:(dd||0)};later();ov.remove();pane();toast("Fond appliqué");}
         else if(tab==="cadres"){setCadre(f);later();ov.remove();pane();toast("Cadre ajouté");}
-        else{var kn=(ST.ov||[]).filter(function(e){return e&&e.lib==="stk";}).length;XM.addOv({t:"img",u:f,x:Math.max(18,82-(kn%4)*20),y:16+Math.floor(kn/4)*16,w:26,rot:0,op:100,lib:"stk"});toast("Sticker ajouté — touche « Terminer » pour le placer");var ovl=document.querySelector(".ovl");if(!ovl)document.body.appendChild(ov);}
+        else{var kn=(ST.ov||[]).filter(function(e){return e&&e.lib==="stk";}).length;XM.addOv({t:"img",u:f,x:Math.max(18,82-(kn%4)*20),y:16+Math.floor(kn/4)*16,w:26,rot:0,op:100,lib:"stk"});toast("Sticker ajouté ✓");var xb=ov.querySelector("#lb_x");if(xb)xb.textContent="✓ Terminer ("+(kn+1)+" ajouté"+(kn?"s":"")+")";}
       };});
       offBox(ov.querySelector("#lb_off"),db);
     }});

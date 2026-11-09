@@ -545,7 +545,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=97;var BACK=null;var CP=0,XP="img";
+var VER=98;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -1911,8 +1911,10 @@ function shareFirst(){
 function viewImages(){
   var cs=PRE.filter(function(p){return p.c;});if(!cs.length)return;
   var ov=document.createElement("div");ov.className="ovl";ov.style.cssText="position:fixed;inset:0;background:#111;z-index:50;overflow:auto;padding:12px;-webkit-overflow-scrolling:touch";
-  var tip=document.createElement("div");tip.style.cssText="color:#fff;font-size:15px;line-height:1.4;padding:6px 4px 12px";tip.textContent="Appuie longuement sur l'image, puis choisis « Télécharger l'image » ou « Enregistrer ».";ov.appendChild(tip);
-  cs.forEach(function(p){var im=new Image();im.style.cssText="width:100%;height:auto;display:block;margin-bottom:14px;border-radius:6px;background:#fff";im.src=outCanvas(p.c).toDataURL("image/png");im.alt=p.name;ov.appendChild(im);});
+  var tip=document.createElement("div");tip.style.cssText="color:#fff;font-size:15px;line-height:1.4;padding:6px 4px 12px";tip.textContent=NAT.is()?"Touche « Enregistrer » sous l'image : elle est rangée dans Documents/YiriDesign.":"Appuie longuement sur l'image, puis choisis « Télécharger l'image » ou « Enregistrer ».";ov.appendChild(tip);
+  cs.forEach(function(p){var im=new Image();im.style.cssText="width:100%;height:auto;display:block;margin-bottom:14px;border-radius:6px;background:#fff";im.src=outCanvas(p.c).toDataURL("image/png");im.alt=p.name;ov.appendChild(im);
+    if(NAT.is()){var sb=document.createElement("button");sb.textContent="⬇ Enregistrer cette image";sb.className="btn full";sb.style.cssText="margin:-6px 0 16px";
+      sb.onclick=function(){canvasBlob(outCanvas(p.c),"image/png",1,function(bl){dl(bl,fname(p)+".png");});};ov.appendChild(sb);}});
   var cl=document.createElement("button");cl.textContent="Fermer";cl.className="btn full";cl.onclick=function(){ov.remove();};ov.appendChild(cl);
   document.body.appendChild(ov);
 }

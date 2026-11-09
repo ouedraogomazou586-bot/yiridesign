@@ -1,4 +1,4 @@
-const V="yiri-v98",LIB="yiri-lib";
+const V="yiri-v100",LIB="yiri-lib";
 const FILES=["./","index.html","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));});

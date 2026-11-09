@@ -80,6 +80,22 @@ img[style*="object-fit:cover"],.ba.ph:not(.cut){object-position:50% 12%}
 .thumbs canvas,.thumbs img{width:100%;height:auto;border:1px solid var(--bd);border-radius:6px;background:#fff}
 .tn{margin:6px 0}.tn label{display:flex;justify-content:space-between;font-size:15px;margin:0}.tn input[type=range]{width:100%;height:34px}
 </style>
+<script>
+/* Écran de secours : si l'application ne démarre pas en 5 s, on montre l'erreur et un bouton de réparation */
+(function(){window.__boot=0;var E=[];
+  window.addEventListener("error",function(e){E.push((e.message||"erreur")+(e.lineno?" (ligne "+e.lineno+")":""));});
+  window.addEventListener("unhandledrejection",function(e){E.push("promesse: "+(e.reason&&e.reason.message||e.reason||""));});
+  function show(){ if(window.__boot||document.getElementById("rescue"))return;
+    var d=document.createElement("div");d.id="rescue";d.style.cssText="position:fixed;inset:0;z-index:99999;background:#fff;color:#111;padding:22px;font:16px/1.45 sans-serif;overflow:auto";
+    d.innerHTML='<h2 style="margin:0 0 8px">YiriDesign n\'a pas pu démarrer</h2><p>Appuie sur « Réparer » : cela vide la copie enregistrée de l\'application (tes fiches et créations ne sont <b>pas</b> effacées) et recharge.</p><button id="rs_go" style="font:inherit;font-weight:700;padding:14px 18px;border:0;border-radius:12px;background:#0f766e;color:#fff;width:100%">🔧 Réparer</button><p style="margin-top:14px;font-size:13px;color:#555">Détail technique (à envoyer au support) :<br><code style="word-break:break-all">'+(E.join(" | ")||"aucune erreur JavaScript détectée")+' · '+navigator.userAgent.slice(0,120)+'</code></p>';
+    document.body.appendChild(d);
+    document.getElementById("rs_go").onclick=function(){var jobs=[];
+      try{if(navigator.serviceWorker)jobs.push(navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));}));}catch(e){}
+      try{if(window.caches)jobs.push(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!=="yiri-lib";}).map(function(x){return caches.delete(x);}));}));}catch(e){}
+      Promise.all(jobs).catch(function(){}).then(function(){location.reload();});};}
+  setTimeout(show,5000);
+})();
+</script>
 </head>
 <body>
 <div class="err" id="err"></div>
@@ -529,7 +545,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=93;var BACK=null;var CP=0,XP="img";
+var VER=95;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3877,6 +3893,7 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
   }
   function quit(){
     try{LOG.add("quitter","demande");}catch(e){}
+    if(NAT.exit())return;
     leaving=true;
     for(var i=0;i<14;i++)(function(i){setTimeout(function(){try{history.back();}catch(e){}},i*90);})(i);
     setTimeout(function(){try{window.close();}catch(e){}},1500);
@@ -3905,6 +3922,26 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
     askQuit();
   });
 })();
+/* ===== Version APK (Capacitor) : enregistrer et partager les fichiers, quitter proprement ===== */
+var NAT=(function(){
+  var C=window.Capacitor,nat=false;try{nat=!!(C&&C.isNativePlatform&&C.isNativePlatform());}catch(e){}
+  function P(n){return C&&C.Plugins&&C.Plugins[n];}
+  function b64(blob,cb){var r=new FileReader();r.onload=function(){cb(String(r.result).split(",")[1]||"");};r.readAsDataURL(blob);}
+  function save(blob,name,dir,ok,ko){var F=P("Filesystem");if(!F){ko&&ko("pas de module fichiers");return;}
+    b64(blob,function(d){F.writeFile({path:"YiriDesign/"+name,data:d,directory:dir,recursive:true}).then(function(r){ok(r.uri);}).catch(function(e){ko&&ko(e);});});}
+  if(nat){
+    /* « Télécharger » : le fichier est enregistré dans Documents/YiriDesign ; si le téléphone refuse, on ouvre le menu Partager */
+    window.dl=function(blob,name){
+      save(blob,name,"DOCUMENTS",function(){toast("Enregistré : Documents/YiriDesign/"+name);},function(){
+        save(blob,name,"CACHE",function(uri){try{P("Share").share({title:name,url:uri,dialogTitle:"Envoyer ou enregistrer"}).catch(function(){});}catch(e){toast("Impossible d'enregistrer le fichier");}},function(){toast("Impossible d'enregistrer le fichier");});});};
+    /* le partage « WhatsApp, Facebook… » passe par le menu Partager d'Android */
+    navigator.canShare=function(d){return !!(d&&d.files&&d.files.length);};
+    navigator.share=function(d){return new Promise(function(res,rej){var fs=(d&&d.files)||[],uris=[],i=0;
+      (function nx(){if(i>=fs.length){var S=P("Share");if(!S){rej("pas de partage");return;}S.share({title:(d&&d.title)||"YiriDesign",files:uris,dialogTitle:"Partager"}).then(res).catch(rej);return;}
+        var f=fs[i++];save(f,f.name,"CACHE",function(u){uris.push(u);nx();},rej);})();});};
+  }
+  return {is:function(){return nat;},exit:function(){try{var A=P("App");if(nat&&A&&A.exitApp){A.exitApp();return true;}}catch(e){}return false;}};
+})();
 /* ===== Journal d'activité (v85) : local, avec accord, jamais de contenu ===== */
 var LOG=(function(){
   var KEY="ac_log",MAX=1500,L=[];
@@ -3931,7 +3968,7 @@ var LOG=(function(){
     window.addEventListener("appinstalled",function(){add("installation");});
     document.addEventListener("visibilitychange",function(){add(document.hidden?"arriere_plan":"premier_plan");});
     var dm="navigateur";try{if(matchMedia("(display-mode: standalone)").matches)dm="standalone";else if(matchMedia("(display-mode: minimal-ui)").matches)dm="minimal-ui";}catch(e){}
-    add("ouverture","v"+VER+(navigator.onLine?" en ligne":" hors ligne")+" · "+dm+" · "+((document.referrer||"").indexOf("android-app")===0?"APK":"web")+" · hist="+history.length);
+    add("ouverture","v"+VER+(navigator.onLine?" en ligne":" hors ligne")+" · "+dm+" · "+(NAT.is()?"APK-natif":((document.referrer||"").indexOf("android-app")===0?"APK-twa":"web"))+" · hist="+history.length);
     window.addEventListener("pagehide",function(ev){add("fermeture_page",ev.persisted?"mise en cache":"definitive");});
   }
   function csv(){var s="date_heure_ms;evenement;detail\n";L.forEach(function(x){s+=x.t+";"+x.e+";"+String(x.d).replace(/[;\n"]/g," ")+"\n";});return s;}
@@ -4015,6 +4052,7 @@ var LIBU=(function(){
   }
   function offBox(box,db){
     var all=[];["fonds","stickers","cadres"].forEach(function(k){(db[k]||[]).forEach(function(x){all.push("assets/"+x.f);});});FNT.files().forEach(function(u){all.push(u);});
+    if(NAT.is()){box.innerHTML="✅ Tous les visuels et toutes les polices sont <b>inclus dans l'application</b> : aucun téléchargement nécessaire.";return;}
     var done=SET.libOff===all.length&&all.length>0;
     box.innerHTML=done?'✅ Bibliothèque téléchargée : disponible <b>sans internet</b>.':'📶 Pour utiliser toute la bibliothèque sans internet, télécharge-la une fois (environ 8 Mo).<div style="margin-top:8px"><button class="btn sec" id="lb_dl">⬇ Télécharger pour le hors ligne</button></div><div id="lb_pr" class="hint"></div>';
     var b=box.querySelector("#lb_dl");if(!b)return;
@@ -4031,7 +4069,8 @@ var LIBU=(function(){
 document.getElementById("idb").onclick=identity;
 document.getElementById("setb").onclick=settings;document.getElementById("srchb").onclick=searchScreen;
 loadLogoImg(home,true);lockScreen();
-try{if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js");}catch(e){}
+try{if(!NAT.is()&&"serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js");}catch(e){}
+window.__boot=1;
 </script>
 </body>
 </html>

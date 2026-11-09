@@ -1,0 +1,28 @@
+name: Installer la bibliothèque d'images
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'assets.zip'
+permissions:
+  contents: write
+jobs:
+  installer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Décompresser assets.zip
+        run: |
+          set -e
+          test -f assets.zip || { echo "assets.zip est introuvable à la racine du dépôt"; exit 1; }
+          rm -rf assets
+          unzip -q -o assets.zip
+          rm assets.zip
+          echo "Fichiers installés :"; find assets -type f | wc -l; du -sh assets
+      - name: Enregistrer
+        run: |
+          git config user.name "yiridesign-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -A
+          git commit -m "Bibliothèque : fonds, stickers, cadres" || echo "Rien à changer"
+          git push

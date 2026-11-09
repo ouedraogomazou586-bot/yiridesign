@@ -545,7 +545,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=101;var BACK=null;var CP=0,XP="img";
+var VER=102;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -2116,7 +2116,8 @@ function home(){
   var items=[];CATS.forEach(function(c){var n=catIds(c).length;if(n)items.push([c[0],c[1],c[2],c[3]]);});
   h+='<div class="gt">Que veux-tu créer ?</div>'+menuHtml(items);
   if(!ME().nom)h+='<div class="note" style="margin-top:22px">Astuce : renseignez d\'abord <b>Mon identité</b> (nom, téléphone, logo). Tous vos documents seront alors préremplis avec vos coordonnées et votre logo.</div>';
-  app.innerHTML=h;banInit();
+  h+='<div id="pubst" class="hint" style="text-align:center;margin:22px 0 4px"></div>';
+  app.innerHTML=h;banInit();if(window.PUBS)PUBS.show();
   menuBind(function(k){catScreen(k);});
   var cg=document.getElementById("chg");if(cg)cg.onclick=identity;
   var mc=document.getElementById("mycr");if(mc)mc.onclick=creations;
@@ -4069,6 +4070,33 @@ var LOG=(function(){
   return {init:init,add:add,sync:sync,ask:ask,screen:screenLog,csv:csv,json:json,get:function(){return L;}};
 })();
 LOG.init();
+/* chiffres publics (v102) : nombre d'utilisateurs et de téléchargements, affichés seulement à partir d'un seuil */
+var PUBS=(function(){
+  var MIN=20,KEY="ac_pub";
+  function get(){try{return JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){return {};}}
+  function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ");}
+  function show(){
+    var el=document.getElementById("pubst");if(!el)return;var o=get(),a=[];
+    if(o.u>=MIN)a.push("👥 "+fmt(o.u)+" utilisateurs");
+    if(o.d>=MIN)a.push("⬇ "+fmt(o.d)+" téléchargements");
+    el.textContent=a.join("  ·  ");
+  }
+  function refresh(){
+    if(!navigator.onLine)return; var o=get();
+    if(o.t&&Date.now()-o.t<6*3600*1000)return;
+    var u=fetch("https://segdgrecoreoqvrqwavj.supabase.co/rest/v1/rpc/public_stats",{method:"POST",headers:{"Content-Type":"application/json","apikey":"sb_publishable_D7vXRASIe4twImyViuzW-A_d3JCvRl8"},body:"{}"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
+    var d=fetch("https://api.github.com/repos/ouedraogomazou586-bot/yiridesign/releases?per_page=100").then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
+    Promise.all([u,d]).then(function(x){
+      var n=get();n.t=Date.now();
+      if(x[0]&&typeof x[0].users==="number")n.u=x[0].users;
+      if(x[1]&&x[1].length){var t=0;x[1].forEach(function(r){(r.assets||[]).forEach(function(a){if(/\.apk$/i.test(a.name))t+=a.download_count||0;});});n.d=t;}
+      try{localStorage.setItem(KEY,JSON.stringify(n));}catch(e){}
+      show();
+    });
+  }
+  setTimeout(refresh,5000);
+  return {show:show,refresh:refresh};
+})();
 setTimeout(function(){if(!document.getElementById("lock"))LOG.ask();},1200);
 /* ===== Bibliothèque (v86) : fonds, stickers, cadres décorés — fichiers dans assets/, gardés hors ligne ===== */
 var LIBU=(function(){

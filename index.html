@@ -529,7 +529,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=92;var BACK=null;var CP=0,XP="img";
+var VER=93;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -1545,7 +1545,19 @@ var XM=(function(){
         /* un fond plein qui suit (papier blanc, aplat) effacerait l'image : on remet l'image à la place */
         var fs=this.fillStyle;if(typeof fs==="string"&&(/^#[0-9a-f]{3,6}$/i.test(fs)||/^rgb\(/i.test(fs)||/^[a-z]+$/i.test(fs))&&this.globalAlpha>=0.9){paint(this,c);return;}}
       return fr.apply(this,arguments);};})();
-  function withFond(cfg,fn){var f=ST.fond;if(!f||!f.u||!FKIND.test(cfg.kind))return fn();var im=img(f.u);if(!im)return fn();FONDC={im:im,dim:f.dim||0};try{return fn();}finally{FONDC=null;}}
+  /* luminosité moyenne du fond (0 = noir, 1 = blanc), voile compris : sert à garder le texte lisible */
+  var LUMC={};
+  function fondLum(u,im,dim){var k=u;if(LUMC[k]==null){try{var c=mk(12,12),x=c.getContext("2d");x.drawImage(im,0,0,12,12);var d=x.getImageData(0,0,12,12).data,t=0;for(var i=0;i<d.length;i+=4)t+=(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2])/255;LUMC[k]=t/(d.length/4);}catch(e){LUMC[k]=0.5;}}
+    var l=LUMC[k];if(dim>0)l=l*(1-dim/100);else if(dim<0)l=l+(1-l)*(-dim/100);return l;}
+  function hexLum(h){var m=/^#([0-9a-f]{6})$/i.exec(h||"");if(!m)return 0.5;var n=parseInt(m[1],16);return (0.2126*(n>>16)+0.7152*((n>>8)&255)+0.0722*(n&255))/255;}
+  function withFond(cfg,fn){var f=ST.fond;if(!f||!f.u||!FKIND.test(cfg.kind))return fn();var im=img(f.u);if(!im)return fn();FONDC={im:im,dim:f.dim||0};
+    var saved=ST.cc,fix=false;
+    try{var lum=fondLum(f.u,im,f.dim||0);
+      if(cfg.kind==="poster"&&!(saved&&saved.fg)){var fg=hexLum(palFor().fg);
+        if(lum<0.45&&fg<0.55){ST.cc=Object.assign({},saved||{},{fg:"#ffffff"});fix=true;}
+        else if(lum>0.62&&fg>0.6){ST.cc=Object.assign({},saved||{},{fg:"#111111"});fix=true;}}
+      return fn();}
+    finally{FONDC=null;if(fix)ST.cc=saved;}}
   /* --- rendu complet d'un service --- */
   function render(cfg,d){return withFond(cfg,function(){return render0(cfg,d);});}
   function render0(cfg,d){

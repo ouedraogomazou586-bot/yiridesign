@@ -529,7 +529,7 @@ function brandVal(b){
 /* ============ État ============ */
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:""};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
-var VER=89;var BACK=null;var CP=0,XP="img";
+var VER=92;var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3864,6 +3864,7 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
     try{document.getElementById("yq_n").focus();}catch(e){}
   }
   function quit(){
+    try{LOG.add("quitter","demande");}catch(e){}
     leaving=true;
     for(var i=0;i<14;i++)(function(i){setTimeout(function(){try{history.back();}catch(e){}},i*90);})(i);
     setTimeout(function(){try{window.close();}catch(e){}},1500);
@@ -3876,10 +3877,14 @@ backB.onclick=function(){VID.stop=true;(BACK||home)();};
     try{ if(navigator.userActivation&&!navigator.userActivation.isActive)return; /* seul un vrai geste compte pour Chrome */
       history.pushState({yiri:1},""); armed=false; }catch(e){} }
   ["pointerup","touchend","mouseup","click","keydown"].forEach(function(ev){document.addEventListener(ev,arm,true);});
+  var T0=Date.now();
   window.addEventListener("popstate",function(){
     if(leaving)return;
     armed=true;
     try{history.pushState({yiri:1},"");}catch(e){}
+    try{LOG.add("retour_telephone",(Date.now()-T0)+"ms apres ouverture");}catch(e){}
+    /* au démarrage (3 s), Chrome peut envoyer un faux « retour » : on l'ignore, sinon l'application se fermerait toute seule */
+    if(Date.now()-T0<3000)return;
     if(window.__bt){window.__bt();return;}
     var q=document.getElementById("yq");if(q){q.remove();return;}
     var vo=document.querySelector(".ovl");if(vo){vo.remove();return;}
@@ -3913,7 +3918,9 @@ var LOG=(function(){
     window.addEventListener("offline",function(){add("reseau","hors ligne");});
     window.addEventListener("appinstalled",function(){add("installation");});
     document.addEventListener("visibilitychange",function(){add(document.hidden?"arriere_plan":"premier_plan");});
-    add("ouverture","v"+VER+(navigator.onLine?" en ligne":" hors ligne"));
+    var dm="navigateur";try{if(matchMedia("(display-mode: standalone)").matches)dm="standalone";else if(matchMedia("(display-mode: minimal-ui)").matches)dm="minimal-ui";}catch(e){}
+    add("ouverture","v"+VER+(navigator.onLine?" en ligne":" hors ligne")+" · "+dm+" · "+((document.referrer||"").indexOf("android-app")===0?"APK":"web")+" · hist="+history.length);
+    window.addEventListener("pagehide",function(ev){add("fermeture_page",ev.persisted?"mise en cache":"definitive");});
   }
   function csv(){var s="date_heure_ms;evenement;detail\n";L.forEach(function(x){s+=x.t+";"+x.e+";"+String(x.d).replace(/[;\n"]/g," ")+"\n";});return s;}
   function json(){return JSON.stringify({appareil:did(),version:VER,export:Date.now(),evenements:L},null,1);}
@@ -3955,12 +3962,14 @@ var LIBU=(function(){
     var f=ST.fond,hasC=(ST.ov||[]).some(function(e){return e&&e.lib==="cad";}),ns=(ST.ov||[]).filter(function(e){return e&&e.lib==="stk";}).length;
     var h='<button class="btn full" id="lb_open" style="margin:0 0 6px">🎨 Bibliothèque : fonds, stickers, cadres décorés</button><div class="hint" style="margin:0 0 6px">'+(f?'Fond image actif. ':'')+(hasC?'Cadre actif. ':'')+(ns?ns+' sticker(s). ':'')+'Plus de 230 visuels et 22 polices, utilisables sans internet une fois téléchargés.</div>';
     if(f)h+='<div class="tn"><label><span>Voile sur le fond (– éclaircit, + assombrit)</span><b id="lb_dv">'+(f.dim||0)+'</b></label><input type="range" id="lb_dim" min="-70" max="70" step="5" value="'+(f.dim||0)+'"></div><button class="btn sec full" id="lb_nof" style="margin:0 0 8px">Retirer le fond image</button>';
+    if(ns)h+='<button class="btn sec full" id="lb_nostk" style="margin:0 0 8px">🗑 Retirer tous les stickers ('+ns+')</button>';
     if(hasC)h+='<button class="btn sec full" id="lb_nocad" style="margin:0 0 8px">Retirer le cadre</button>';
     return h;}
   function bind(p){
     var o=p.querySelector("#lb_open");if(o)o.onclick=open;
     var d=p.querySelector("#lb_dim");if(d)d.oninput=function(){ST.fond.dim=+d.value;p.querySelector("#lb_dv").textContent=d.value;later();};
     var n=p.querySelector("#lb_nof");if(n)n.onclick=function(){ST.fond=null;later();pane();};
+    var ks=p.querySelector("#lb_nostk");if(ks)ks.onclick=function(){if(!confirm("Retirer tous les stickers de cette création ?"))return;ST.ov=(ST.ov||[]).filter(function(e){return !(e&&e.lib==="stk");});later();pane();toast("Stickers retirés");};
     var c=p.querySelector("#lb_nocad");if(c)c.onclick=function(){ST.ov=(ST.ov||[]).filter(function(e){return !(e&&e.lib==="cad");});later();pane();};
   }
   function setCadre(f){ST.ov=(ST.ov||[]).filter(function(e){return !(e&&e.lib==="cad");});ST.ov.unshift({t:"img",k:"full",u:f,x:50,y:50,w:100,rot:0,op:100,lib:"cad"});}
@@ -3977,7 +3986,7 @@ var LIBU=(function(){
       var h='<div style="max-width:640px;margin:0 auto"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">Bibliothèque</b><button class="btn" id="lb_x">✓ Terminer</button></div>'
        +'<div class="seg" id="lb_tabs" style="margin:10px 0">'+TABS.map(function(t){return '<button data-t="'+t[0]+'"'+(t[0]===tab?' class="on"':'')+'>'+t[1]+'</button>';}).join("")+'</div>'
        +'<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px">'+cats.map(function(c){return '<button class="btn sec lbc" data-c="'+c+'" style="white-space:nowrap;padding:6px 12px;'+(c===cur?'outline:2px solid var(--ac,#0f766e)':'')+'">'+c+'</button>';}).join("")+'</div>'
-       +'<div class="hint" style="margin:6px 0">'+(tab==="fonds"?'Touche un fond pour l\'utiliser derrière ton affiche (règle le voile ensuite dans l\'onglet Style).':tab==="stickers"?'Touche un sticker pour l\'ajouter. Tu peux le déplacer, l\'agrandir ou le tourner ensuite (liste des éléments ajoutés, onglet Style).':'Un cadre décoré s\'ajoute par-dessus l\'affiche. Un seul cadre à la fois.')+'</div>'
+       +'<div class="hint" style="margin:6px 0">'+(tab==="fonds"?'Touche un fond pour l\'utiliser derrière ton affiche (règle le voile ensuite dans l\'onglet Style).':tab==="stickers"?'Touche un sticker : il s\'ajoute sur ton affiche, et tu reviens à l\'écran de création. Pour en ajouter un autre, rouvre la bibliothèque.':'Un cadre décoré s\'ajoute par-dessus l\'affiche. Un seul cadre à la fois.')+'</div>'
        +'<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:8px">'+sel.map(function(x,i){return '<button class="lbi" data-f="'+x.f+'" data-c2="'+x.cat+'" style="border:1px solid var(--bd);border-radius:10px;padding:4px;background:'+(tab==="stickers"||tab==="cadres"?'repeating-conic-gradient(#d9dde3 0 25%,#f4f6f8 0 50%) 0 0/14px 14px':'var(--card)')+';aspect-ratio:'+asp+';overflow:hidden"><img loading="lazy" src="assets/'+x.f+'" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></button>';}).join("")+'</div>'
        +'<div class="note" id="lb_off" style="margin-top:14px"></div></div>';
       ov.innerHTML=h;
@@ -3987,7 +3996,7 @@ var LIBU=(function(){
       Array.prototype.forEach.call(ov.querySelectorAll(".lbi"),function(b){b.onclick=function(){var f="assets/"+b.getAttribute("data-f");
         if(tab==="fonds"){var dc=b.getAttribute("data-c2"),dd=({"Afrique":-40,"Motifs":-30,"Formes":-20,"Textures":0})[dc];ST.fond={u:f,dim:ST.fond?ST.fond.dim||0:(dd||0)};later();ov.remove();pane();toast("Fond appliqué");}
         else if(tab==="cadres"){setCadre(f);later();ov.remove();pane();toast("Cadre ajouté");}
-        else{var kn=(ST.ov||[]).filter(function(e){return e&&e.lib==="stk";}).length;XM.addOv({t:"img",u:f,x:Math.max(18,82-(kn%4)*20),y:16+Math.floor(kn/4)*16,w:26,rot:0,op:100,lib:"stk"});toast("Sticker ajouté ✓");var xb=ov.querySelector("#lb_x");if(xb)xb.textContent="✓ Terminer ("+(kn+1)+" ajouté"+(kn?"s":"")+")";}
+        else{var kn=(ST.ov||[]).filter(function(e){return e&&e.lib==="stk";}).length;XM.addOv({t:"img",u:f,x:Math.max(18,82-(kn%4)*20),y:16+Math.floor(kn/4)*16,w:26,rot:0,op:100,lib:"stk"});ov.remove();toast("Sticker ajouté ✓");}
       };});
       offBox(ov.querySelector("#lb_off"),db);
     }});

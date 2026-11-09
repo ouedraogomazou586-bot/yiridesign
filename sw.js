@@ -1,11 +1,16 @@
-const V="yiri-v83";
+const V="yiri-v88",LIB="yiri-lib";
 const FILES=["./","index.html","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));});
-self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
+// le cache « yiri-lib » (bibliothèque d'images, modèle de détourage) n'est jamais effacé par une mise à jour
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==LIB).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
 function fromCache(req){return caches.open(V).then(c=>c.match(req,{ignoreSearch:true}).then(m=>m||c.match("index.html").then(i=>i||c.match("./"))));}
-// Réseau d'abord (mise à jour dès qu'il y a internet), mais sans attendre indéfiniment : copie hors connexion si le réseau est lent ou absent
+function isLib(u){const p=new URL(u).pathname;return /\/(assets)\//.test(p);}
 self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;if(new URL(e.request.url).origin!==self.location.origin)return;
+ // images de la bibliothèque et modèle IA : copie enregistrée d'abord (gros fichiers, ils ne changent presque jamais)
+ if(isLib(e.request.url)){
+  e.respondWith(caches.open(LIB).then(c=>c.match(e.request.url).then(m=>m||fetch(e.request).then(r=>{if(r&&r.ok&&r.status===200){c.put(e.request.url,r.clone());}return r;}))));
+  return;}
  const net=fetch(e.request).then(r=>{if(r&&r.ok){const k=r.clone();caches.open(V).then(c=>c.put(e.request,k));}return r;});
  e.respondWith(new Promise(res=>{
   let done=false;

@@ -1,4 +1,4 @@
-const V="yiri-v144",LIB="yiri-lib";
+const V="yiri-v151",LIB="yiri-lib";
 const FILES=["./","index.html","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));
@@ -8,7 +8,11 @@ self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.a
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==LIB).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
 function fromCache(req){return caches.open(V).then(c=>c.match(req,{ignoreSearch:true}).then(m=>m||c.match("index.html").then(i=>i||c.match("./"))));}
 function isLib(u){const p=new URL(u).pathname;return /\/(assets)\//.test(p)||/u2netp_256\.bin$/.test(p);}
-self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;if(new URL(e.request.url).origin!==self.location.origin)return;
+function isFace(u){return /^https:\/\/cdn\.jsdelivr\.net\/npm\/@mediapipe\/tasks-vision@/.test(u)||/^https:\/\/storage\.googleapis\.com\/mediapipe-models\/face_detector\//.test(u);}
+self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;
+ // détecteur de visage (MediaPipe) : téléchargé une fois avec internet, puis disponible sans internet
+ if(isFace(e.request.url)){e.respondWith(caches.open(LIB).then(c=>c.match(e.request.url).then(m=>m||fetch(e.request).then(r=>{if(r&&r.ok&&r.status===200){c.put(e.request.url,r.clone());}return r;}))));return;}
+ if(new URL(e.request.url).origin!==self.location.origin)return;
  // images de la bibliothèque et modèle IA : copie enregistrée d'abord (gros fichiers, ils ne changent presque jamais)
  if(isLib(e.request.url)){
   e.respondWith(caches.open(LIB).then(c=>c.match(e.request.url).then(m=>m||fetch(e.request).then(r=>{if(r&&r.ok&&r.status===200){c.put(e.request.url,r.clone());}return r;}))));

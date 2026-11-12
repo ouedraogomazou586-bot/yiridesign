@@ -1,0 +1,67 @@
+name: Installer les modèles photo d'identité
+on:
+  workflow_dispatch:
+    inputs:
+      fin:
+        description: "Installer aussi le modèle de détourage ultra-fin (oui / non)"
+        default: "non"
+      depot_fin:
+        description: "Dépôt Hugging Face du modèle fin"
+        default: "onnx-community/BiRefNet_lite-ONNX"
+      fichier_fin:
+        description: "Fichier du modèle fin"
+        default: "onnx/model_fp16.onnx"
+permissions:
+  contents: write
+jobs:
+  modeles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Détecteur de visage (yeux, inclinaison) pour le mode hors ligne
+        run: |
+          set -e
+          V=0.10.14
+          B=https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@$V
+          D=lib/mediapipe
+          mkdir -p $D/wasm
+          curl -fL --retry 3 -o $D/vision_bundle.mjs "$B/vision_bundle.mjs"
+          for f in vision_wasm_internal.js vision_wasm_internal.wasm vision_wasm_nosimd_internal.js vision_wasm_nosimd_internal.wasm; do
+            curl -fL --retry 3 -o "$D/wasm/$f" "$B/wasm/$f"
+          done
+          curl -fL --retry 3 -o $D/blaze_face_short_range.tflite "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite"
+          ls -lR $D
+          test $(stat -c%s $D/vision_bundle.mjs) -gt 100000
+          test $(stat -c%s $D/blaze_face_short_range.tflite) -gt 100000
+      - name: Modèle de détourage ultra-fin (facultatif)
+        if: ${{ github.event.inputs.fin == 'oui' }}
+        run: |
+          set -e
+          R="${{ github.event.inputs.depot_fin }}"
+          F="${{ github.event.inputs.fichier_fin }}"
+          echo "== Fiche du modèle =="
+          curl -fsSL "https://huggingface.co/api/models/$R" -o info.json
+          python3 - <<'PY'
+          import json,sys
+          d=json.load(open('info.json'))
+          lic=(d.get('cardData') or {}).get('license') or next((t.split(':',1)[1] for t in d.get('tags',[]) if t.startswith('license:')),'inconnue')
+          print('Licence déclarée :',lic)
+          print('Fichiers :',[s['rfilename'] for s in d.get('siblings',[])][:60])
+          if str(lic).lower() not in ('mit','apache-2.0','bsd-3-clause','bsd-2-clause','cc0-1.0','unlicense'):
+              print("ARRÊT : licence non confirmée pour un usage commercial."); sys.exit(1)
+          PY
+          N=models/birefnet
+          mkdir -p $N/onnx
+          for f in config.json preprocessor_config.json; do
+            curl -fL --retry 3 -o "$N/$f" "https://huggingface.co/$R/resolve/main/$f"
+          done
+          curl -fL --retry 3 -o "$N/onnx/model.onnx" "https://huggingface.co/$R/resolve/main/$F"
+          ls -l $N $N/onnx
+          test $(stat -c%s $N/onnx/model.onnx) -gt 5000000
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add lib models 2>/dev/null || git add lib
+          git commit -m "Ajout des modèles photo d'identité" || echo "rien à ajouter"
+          git push

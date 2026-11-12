@@ -1,0 +1,27 @@
+name: Installer les outils PDF
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Télécharger pdf.js
+        run: |
+          set -e
+          B=https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build
+          mkdir -p lib
+          curl -fL --retry 3 -o lib/pdf.min.mjs "$B/pdf.min.mjs"
+          curl -fL --retry 3 -o lib/pdf.worker.min.mjs "$B/pdf.worker.min.mjs"
+          ls -l lib
+          test $(stat -c%s lib/pdf.min.mjs) -gt 100000
+          test $(stat -c%s lib/pdf.worker.min.mjs) -gt 500000
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add lib
+          git commit -m "Ajout des outils PDF (pdf.js)" || echo "rien à ajouter"
+          git push

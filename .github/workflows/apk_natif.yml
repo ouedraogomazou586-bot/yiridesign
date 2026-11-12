@@ -1,4 +1,5 @@
 # Fabrique l'application YiriDesign en APK « natif » (comme Mortier) : tout est dans l'APK, rien ne dépend de Chrome.
+# À placer dans le dépôt de l'application sous le nom .github/workflows/apk_natif.yml
 # Lancement : onglet Actions -> « Fabriquer YiriDesign (APK natif) » -> Run workflow.
 name: Fabriquer YiriDesign (APK natif)
 
@@ -52,13 +53,136 @@ jobs:
           {"appId":"bf.yiridesign.app","appName":"YiriDesign","webDir":"www","server":{"androidScheme":"https"},"backgroundColor":"#0F766E"}
           JSON
           npm install --no-audit --no-fund
-          # Scanner de documents Google (ML Kit) : si le plugin est introuvable, l'APK est fabriqué quand même (l'ancien scanner prend le relais)
-          npm install @capacitor-mlkit/document-scanner@^6 --no-audit --no-fund || echo "ATTENTION : plugin scanner Google non installé, l'ancien scanner sera utilisé"
           npx cap add android
           npx cap sync android
           echo "Fichiers embarqués dans l'APK :"
           find android/app/src/main/assets/public -type f | wc -l
           du -sh android/app/src/main/assets/public
+
+      - name: Ajouter le scanner de documents Google (ML Kit)
+        run: |
+          cd /tmp/natif/android
+          cat > /tmp/scanner.py <<'PY'
+          import os, re, shutil
+          pkg = "bf/yiridesign/app"
+          d = "app/src/main/java/" + pkg
+          os.makedirs(d, exist_ok=True)
+          main = d + "/MainActivity.java"
+          assert os.path.exists(main), "MainActivity.java introuvable : " + main
+          shutil.copy(main, "/tmp/MainActivity.java.bak")
+          shutil.copy("app/build.gradle", "/tmp/build.gradle.bak")
+          open(d + "/DocScannerPlugin.java", "w", encoding="utf-8").write("""package bf.yiridesign.app;
+
+          import android.app.Activity;
+          import android.content.IntentSender;
+          import androidx.activity.result.ActivityResultLauncher;
+          import androidx.activity.result.IntentSenderRequest;
+          import androidx.activity.result.contract.ActivityResultContracts;
+          import com.getcapacitor.JSArray;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions;
+          import com.google.mlkit.vision.documentscanner.GmsDocumentScanning;
+          import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult;
+
+          @CapacitorPlugin(name = "DocumentScanner")
+          public class DocScannerPlugin extends Plugin {
+            private ActivityResultLauncher<IntentSenderRequest> launcher;
+            private PluginCall pending;
+
+            @Override
+            public void load() {
+              launcher = getActivity().registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> {
+                PluginCall call = pending;
+                pending = null;
+                if (call == null) return;
+                if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
+                  call.reject("canceled");
+                  return;
+                }
+                try {
+                  GmsDocumentScanningResult r = GmsDocumentScanningResult.fromActivityResultIntent(result.getData());
+                  JSArray arr = new JSArray();
+                  if (r != null && r.getPages() != null) {
+                    for (GmsDocumentScanningResult.Page p : r.getPages()) arr.put(p.getImageUri().toString());
+                  }
+                  JSObject o = new JSObject();
+                  o.put("scannedImages", arr);
+                  call.resolve(o);
+                } catch (Exception e) {
+                  call.reject(String.valueOf(e.getMessage()));
+                }
+              });
+            }
+
+            @PluginMethod
+            public void isGoogleDocumentScannerModuleAvailable(PluginCall call) {
+              JSObject o = new JSObject();
+              o.put("available", true);
+              call.resolve(o);
+            }
+
+            @PluginMethod
+            public void installGoogleDocumentScannerModule(PluginCall call) {
+              call.resolve();
+            }
+
+            @PluginMethod
+            public void scanDocument(PluginCall call) {
+              if (pending != null) {
+                call.reject("busy");
+                return;
+              }
+              Integer limit = call.getInt("pageLimit", 20);
+              Boolean gal = call.getBoolean("galleryImportAllowed", true);
+              GmsDocumentScannerOptions options = new GmsDocumentScannerOptions.Builder()
+                .setGalleryImportAllowed(gal == null ? true : gal)
+                .setPageLimit(limit == null ? 20 : limit)
+                .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                .build();
+              pending = call;
+              GmsDocumentScanning.getClient(options)
+                .getStartScanIntent(getActivity())
+                .addOnSuccessListener(intentSender -> {
+                  try {
+                    launcher.launch(new IntentSenderRequest.Builder(intentSender).build());
+                  } catch (Exception e) {
+                    pending = null;
+                    call.reject(String.valueOf(e.getMessage()));
+                  }
+                })
+                .addOnFailureListener(e -> {
+                  pending = null;
+                  call.reject(String.valueOf(e.getMessage()));
+                });
+            }
+          }
+          """)
+          open(main, "w", encoding="utf-8").write("""package bf.yiridesign.app;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              registerPlugin(DocScannerPlugin.class);
+              super.onCreate(savedInstanceState);
+            }
+          }
+          """)
+          g = open("app/build.gradle", encoding="utf-8").read()
+          assert "\ndependencies {" in g, "bloc dependencies introuvable"
+          g = g.replace("\ndependencies {", "\ndependencies {\n    implementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0'", 1)
+          open("app/build.gradle", "w", encoding="utf-8").write(g)
+          print("scanner Google ajouté")
+          PY
+          python3 /tmp/scanner.py
+          echo scanner > /tmp/variante
 
       - name: Régler Android (icône, orientation, écran de démarrage, version)
         run: |
@@ -107,16 +231,30 @@ jobs:
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
           grep -n "versionCode\|versionName\|applicationId" android/app/build.gradle
 
-      - name: Compiler l'APK
+      - name: Compiler l'APK (avec le scanner Google)
+        id: avec
+        continue-on-error: true
         working-directory: /tmp/natif/android
         run: |
           chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Si le scanner Google bloque la fabrication, on le retire et on recompile
+        if: steps.avec.outcome == 'failure'
+        working-directory: /tmp/natif/android
+        run: |
+          echo "ATTENTION : la fabrication avec le scanner Google a échoué. Fabrication sans lui (l'ancien scanner sera utilisé)."
+          cp /tmp/MainActivity.java.bak app/src/main/java/bf/yiridesign/app/MainActivity.java
+          cp /tmp/build.gradle.bak app/build.gradle
+          rm -f app/src/main/java/bf/yiridesign/app/DocScannerPlugin.java
+          echo sans > /tmp/variante
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Préparer le fichier
         run: |
           cp /tmp/natif/android/app/build/outputs/apk/debug/app-debug.apk "YiriDesign-${{ github.run_number }}.apk"
           ls -la YiriDesign-*.apk
+          echo "Variante : $(cat /tmp/variante)"
 
       - name: Publier l'APK (page « Releases » du dépôt)
         uses: softprops/action-gh-release@v2

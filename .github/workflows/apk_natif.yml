@@ -191,6 +191,14 @@ jobs:
           p = "android/app/src/main/AndroidManifest.xml"
           s = open(p, encoding="utf-8").read()
           assert "<activity" in s, "manifeste inattendu : balise activity introuvable"
+          for perm in ("CAMERA", "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS"):
+              ligne = '<uses-permission android:name="android.permission.' + perm + '" />'
+              if ligne not in s:
+                  s = s.replace("<application", ligne + "\n    <application", 1)
+          for feat in ("camera", "camera.autofocus", "microphone"):
+              ligne = '<uses-feature android:name="android.hardware.' + feat + '" android:required="false" />'
+              if ligne not in s:
+                  s = s.replace("<application", ligne + "\n    <application", 1)
           if "screenOrientation" not in s:
               s = s.replace("<activity", '<activity android:screenOrientation="portrait"', 1)
           open(p, "w", encoding="utf-8").write(s)

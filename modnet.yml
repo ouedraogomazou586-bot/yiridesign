@@ -1,0 +1,27 @@
+name: Installer MODNet (détourage photo d'identité)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  modnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Télécharger MODNet
+        run: |
+          set -e
+          B=https://huggingface.co/Xenova/modnet/resolve/main
+          mkdir -p models/modnet/onnx
+          for f in config.json preprocessor_config.json onnx/model_quantized.onnx onnx/model.onnx; do
+            curl -fL --retry 3 -o "models/modnet/$f" "$B/$f"
+          done
+          ls -l models/modnet models/modnet/onnx
+          test $(stat -c%s models/modnet/onnx/model.onnx) -gt 10000000 && test $(stat -c%s models/modnet/onnx/model_quantized.onnx) -gt 5000000
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add models
+          git commit -m "Ajout du modèle MODNet" || echo "rien à ajouter"
+          git push

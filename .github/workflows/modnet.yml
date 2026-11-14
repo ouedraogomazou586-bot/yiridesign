@@ -13,11 +13,11 @@ jobs:
           set -e
           B=https://huggingface.co/Xenova/modnet/resolve/main
           mkdir -p models/modnet/onnx
-          for f in config.json preprocessor_config.json onnx/model.onnx; do
+          for f in config.json preprocessor_config.json onnx/model_quantized.onnx onnx/model.onnx; do
             curl -fL --retry 3 -o "models/modnet/$f" "$B/$f"
           done
           ls -l models/modnet models/modnet/onnx
-          test $(stat -c%s models/modnet/onnx/model.onnx) -gt 10000000
+          test $(stat -c%s models/modnet/onnx/model.onnx) -gt 10000000 && test $(stat -c%s models/modnet/onnx/model_quantized.onnx) -gt 5000000
       - name: Enregistrer dans le dépôt
         run: |
           git config user.name "github-actions"

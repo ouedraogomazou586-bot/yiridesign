@@ -1,0 +1,39 @@
+name: Installer le moteur IA (onnxruntime) pour tests de détourage
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  moteur:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Télécharger le moteur onnxruntime-web
+        run: |
+          set -e
+          mkdir -p /tmp/ort lib/ort
+          cd /tmp/ort
+          npm pack onnxruntime-web@1.22.0
+          tar xzf onnxruntime-web-*.tgz
+          cd "$GITHUB_WORKSPACE"
+          cp /tmp/ort/package/dist/ort.wasm.min.js lib/ort/ || true
+          cp /tmp/ort/package/dist/ort.wasm.min.mjs lib/ort/ || true
+          cp /tmp/ort/package/dist/ort-wasm-simd-threaded.mjs lib/ort/
+          cp /tmp/ort/package/dist/ort-wasm-simd-threaded.wasm lib/ort/
+          cp /tmp/ort/package/LICENSE lib/ort/LICENSE-onnxruntime-web.txt || true
+          ls -l lib/ort
+          test $(stat -c%s lib/ort/ort-wasm-simd-threaded.wasm) -gt 3000000
+      - name: Télécharger le segmenteur MediaPipe (très léger)
+        run: |
+          set -e
+          mkdir -p models/mediapipe
+          curl -fL --retry 3 -o models/mediapipe/selfie_segmenter.tflite https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite
+          ls -l models/mediapipe
+          test $(stat -c%s models/mediapipe/selfie_segmenter.tflite) -gt 100000
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add lib/ort models/mediapipe
+          git commit -m "Ajout du moteur onnxruntime et du segmenteur MediaPipe" || echo "rien à ajouter"
+          git push

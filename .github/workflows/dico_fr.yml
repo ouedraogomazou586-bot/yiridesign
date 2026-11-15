@@ -28,18 +28,39 @@ jobs:
           unmunch "$D" "$A" > /tmp/words.txt 2> /tmp/unmunch.err || true
           wc -l /tmp/words.txt
           head -c 300 /tmp/unmunch.err || true
+      - name: Déplier avec la méthode de secours (nspell)
+        run: |
+          set -e
+          mkdir -p /tmp/nd && cd /tmp/nd
+          npm init -y >/dev/null 2>&1
+          npm install dictionary-fr nspell
+          ls node_modules/dictionary-fr
+          node -e "
+          const nspell=require('nspell');const fs=require('fs');
+          const aff=fs.readFileSync('node_modules/dictionary-fr/index.aff');
+          const dic=fs.readFileSync('node_modules/dictionary-fr/index.dic');
+          const s=nspell(aff,dic);
+          const w=Object.keys(s.data||{});
+          fs.writeFileSync('/tmp/words2.txt',w.join('\n'));
+          console.log('mots (nspell) :',w.length);
+          "
+          mkdir -p /tmp/lic && cp node_modules/dictionary-fr/license* node_modules/dictionary-fr/readme* node_modules/dictionary-fr/package.json /tmp/lic/ 2>/dev/null || true
       - name: Construire le filtre et le tester
         run: |
           python3 - <<'PY'
           import re, unicodedata, math, random, struct, sys
           pat = re.compile(r"^[a-zàâäçéèêëîïôöùûüÿœæ]+(?:-[a-zàâäçéèêëîïôöùûüÿœæ]+)*$")
           W = set()
-          for line in open('/tmp/words.txt', encoding='utf-8', errors='ignore'):
-              w = unicodedata.normalize('NFC', line.strip().lower())
-              if 1 <= len(w) <= 40 and pat.match(w):
-                  W.add(w)
+          for fn in ('/tmp/words.txt', '/tmp/words2.txt'):
+              try:
+                  for line in open(fn, encoding='utf-8', errors='ignore'):
+                      w = unicodedata.normalize('NFC', line.strip().lower())
+                      if 1 <= len(w) <= 40 and pat.match(w):
+                          W.add(w)
+              except FileNotFoundError:
+                  print('absent :', fn)
           print('mots retenus :', len(W))
-          if len(W) < 150000:
+          if len(W) < 250000:
               print('ERREUR : trop peu de mots, le dépliage a échoué'); sys.exit(1)
           n = len(W); K = 14; BITS = 20; m = n * BITS
           def h(w):
@@ -85,6 +106,8 @@ jobs:
               "Le filtre ne contient pas les mots eux-mêmes ; il peut laisser passer très rarement une faute.\n" % n)
           PY
           cp /usr/share/doc/hunspell-fr/copyright lib/spell/COPYRIGHT.txt 2>/dev/null || echo "(fichier copyright introuvable)" > lib/spell/COPYRIGHT.txt
+          cp /tmp/lic/license* lib/spell/LICENCE-dictionary-fr.txt 2>/dev/null || true
+          cp /tmp/lic/package.json lib/spell/package-dictionary-fr.json 2>/dev/null || true
           echo "=== COPYRIGHT (extrait) ==="
           head -60 lib/spell/COPYRIGHT.txt
           ls -la lib/spell

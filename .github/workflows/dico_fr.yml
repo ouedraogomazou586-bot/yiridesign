@@ -1,0 +1,97 @@
+name: Dictionnaire français
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer le dictionnaire et l'outil de dépliage
+        run: |
+          set -e
+          sudo apt-get update -y
+          sudo apt-get install -y hunspell-fr hunspell-tools
+          ls -la /usr/share/hunspell | grep -i "fr" || true
+          ls /usr/share/doc | grep -i "hunspell-fr" || true
+      - name: Déplier tous les mots
+        run: |
+          set -e
+          D=$(ls /usr/share/hunspell/fr_FR.dic 2>/dev/null || ls /usr/share/hunspell/fr*.dic | head -1)
+          A="${D%.dic}.aff"
+          echo "dictionnaire : $D"
+          unmunch "$D" "$A" > /tmp/words.txt 2> /tmp/unmunch.err || true
+          wc -l /tmp/words.txt
+          head -c 300 /tmp/unmunch.err || true
+      - name: Construire le filtre et le tester
+        run: |
+          python3 - <<'PY'
+          import re, unicodedata, math, random, struct, sys
+          pat = re.compile(r"^[a-zàâäçéèêëîïôöùûüÿœæ]+(?:-[a-zàâäçéèêëîïôöùûüÿœæ]+)*$")
+          W = set()
+          for line in open('/tmp/words.txt', encoding='utf-8', errors='ignore'):
+              w = unicodedata.normalize('NFC', line.strip().lower())
+              if 1 <= len(w) <= 40 and pat.match(w):
+                  W.add(w)
+          print('mots retenus :', len(W))
+          if len(W) < 150000:
+              print('ERREUR : trop peu de mots, le dépliage a échoué'); sys.exit(1)
+          n = len(W); K = 14; BITS = 20; m = n * BITS
+          def h(w):
+              h1 = 0x811c9dc5; h2 = 0x9747b28c
+              for b in w.encode('utf-8'):
+                  h1 = ((h1 ^ b) * 16777619) & 0xffffffff
+                  h2 = ((h2 ^ b) * 16777619) & 0xffffffff
+              return h1, (h2 | 1)
+          buf = bytearray((m + 7) // 8)
+          def add(w):
+              a, b = h(w)
+              for i in range(K):
+                  x = (a + i * b) % m
+                  buf[x >> 3] |= (1 << (x & 7))
+          def has(w):
+              a, b = h(w)
+              for i in range(K):
+                  x = (a + i * b) % m
+                  if not (buf[x >> 3] & (1 << (x & 7))): return False
+              return True
+          for w in W: add(w)
+          good = "bonjour expérience professionnelle responsabilités développement comptabilité établissement étudiants travaillé secrétaire gestion équipe clientèle formation diplôme entreprise ingénieur maîtrise compétences langues français anglais ordinateur informatique rigoureux dynamique motivé candidature lettre monsieur madame directeur veuillez agréer salutations distinguées poste recrutement disponible entretien références stage emploi société commerciale vendeuse chauffeur mécanicien électricien comptable assistante administrative logistique marketing communication réseaux sociaux gérer organiser coordonner superviser animer accueillir conseiller vendre acheter livrer réparer installer enseigner".split()
+          miss = [g for g in good if not has(g)]
+          print('mots courants absents :', miss)
+          bad = "experiance profesionnel comptabilite dévelopement reponsable etablissement secretaire formtion competances entreprize ingenieur diplome".split()
+          slip = [b for b in bad if has(b)]
+          print('fautes non détectées :', slip)
+          random.seed(1); alpha = "abcdefghijklmnopqrstuvwxyz"; fp = 0; T = 20000
+          for _ in range(T):
+              s = ''.join(random.choice(alpha) for _ in range(random.randint(6, 10)))
+              if s not in W and has(s): fp += 1
+          print('faux positifs sur mots inventés : %.3f %%' % (100.0 * fp / T))
+          if miss: print('ERREUR : mots courants absents'); sys.exit(1)
+          import os
+          os.makedirs('lib/spell', exist_ok=True)
+          with open('lib/spell/fr.bin', 'wb') as f:
+              f.write(b'YBF1' + struct.pack('<BBBB', K, 0, 0, 0) + struct.pack('<II', m, n) + bytes(buf))
+          print('taille fr.bin :', os.path.getsize('lib/spell/fr.bin'), 'octets')
+          open('lib/spell/LISEZMOI.txt', 'w', encoding='utf-8').write(
+              "Dictionnaire français du correcteur de YiriDesign.\n"
+              "Fichier fr.bin : filtre compact construit à partir du dictionnaire hunspell-fr (Debian), issu de Dicollecte.\n"
+              "Mots : %d. Voir COPYRIGHT.txt pour les licences d'origine.\n"
+              "Le filtre ne contient pas les mots eux-mêmes ; il peut laisser passer très rarement une faute.\n" % n)
+          PY
+          cp /usr/share/doc/hunspell-fr/copyright lib/spell/COPYRIGHT.txt 2>/dev/null || echo "(fichier copyright introuvable)" > lib/spell/COPYRIGHT.txt
+          echo "=== COPYRIGHT (extrait) ==="
+          head -60 lib/spell/COPYRIGHT.txt
+          ls -la lib/spell
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add lib/spell
+          git commit -m "Dictionnaire français du correcteur (aucun effet tant que la version 261 n'est pas installée)" || echo "rien à ajouter"
+          git push

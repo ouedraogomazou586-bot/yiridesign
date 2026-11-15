@@ -1,0 +1,50 @@
+name: Tester Scanic-ml
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scanic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Télécharger les paquets
+        run: |
+          set -e
+          mkdir -p /tmp/sc && cd /tmp/sc
+          npm pack scanic-ml@0.2.0 scanic@1.0.8 onnxruntime-web@1.23.2
+          for f in *.tgz; do mkdir -p "x_${f%.tgz}" && tar xzf "$f" -C "x_${f%.tgz}"; done
+          ls -la
+      - name: Afficher les licences
+        run: |
+          cd /tmp/sc
+          for d in x_*; do
+            echo "=== $d ==="
+            node -e "const p=require('./$d/package/package.json');console.log('licence:',p.license||'(non indiquée)','| version:',p.version,'| dépôt:',JSON.stringify(p.repository||''))"
+            ls "$d/package" | grep -i -E "licen|notice|model_card" || echo "(pas de fichier de licence dans le paquet)"
+          done
+          echo "=== MODEL_CARD (extrait) ==="
+          sed -n 1,60p x_scanic-ml-*/package/MODEL_CARD.md || true
+      - name: Copier dans un dossier de test
+        run: |
+          set -e
+          rm -rf test_scanic && mkdir -p test_scanic
+          cp -r /tmp/sc/x_scanic-ml-*/package test_scanic/scanic-ml
+          cp -r /tmp/sc/x_scanic-1*/package test_scanic/scanic
+          cp -r /tmp/sc/x_onnxruntime-web-*/package/dist test_scanic/ort-1.23.2 || true
+          du -sh test_scanic/*
+          find test_scanic -type f | head -80
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add test_scanic
+          git commit -m "Test Scanic-ml (aucun effet sur l'application)" || echo "rien à ajouter"
+          git push

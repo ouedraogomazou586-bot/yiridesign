@@ -1,0 +1,4 @@
+Dictionnaire français du correcteur de YiriDesign.
+Fichier fr.bin : filtre compact construit à partir du dictionnaire hunspell-fr (Debian), issu de Dicollecte.
+Mots : 451088. Voir COPYRIGHT.txt pour les licences d'origine.
+Le filtre ne contient pas les mots eux-mêmes ; il peut laisser passer très rarement une faute.

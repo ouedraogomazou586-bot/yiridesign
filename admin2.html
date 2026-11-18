@@ -35,8 +35,9 @@ button{background:var(--ac);color:#062925;font-weight:700;border:0;cursor:pointe
 </div>
 <div id="dash" class="hid">
  <div class="top"><h1>YiriDesign Admin</h1><div><button class="sec" id="rf">↻</button> <button class="sec" id="lo">Quitter</button></div></div>
- <div class="tabs2"><button class="sec on" id="t1">📊 Tableau de bord</button><button class="sec" id="t2">🎟️ Codes</button></div>
+ <div class="tabs2"><button class="sec on" id="t1">📊 Tableau de bord</button><button class="sec" id="t3">👥 Utilisateurs</button><button class="sec" id="t2">🎟️ Codes</button></div>
  <div id="body"><p class="mu">Chargement…</p></div>
+<div id="us" class="hid"></div>
 <div id="cr" class="hid"><h2>Codes de recharge</h2>
  <p class="mu">Crée des codes à vendre ou offrir au client. Chaque code donne des crédits IA.</p>
  <div class="two"><div><label class="mu">Nombre de codes</label><input id="cn" type="number" inputmode="numeric" min="1" max="200" value="1"></div>
@@ -111,16 +112,17 @@ async function load(){
  '<div class="c"><div class="n">'+s.exports+'</div><div class="l">Exports (total)</div></div>'+
  '<div class="c"><div class="n">'+s.exports_7j+'</div><div class="l">Exports 7 jours</div></div></div>'+
  (s2?'<div class="grid" style="margin-top:10px"><div class="c"><div class="n">'+s2.nouveaux_7j+'</div><div class="l">Nouveaux 7 jours</div></div><div class="c"><div class="n">'+s2.nouveaux_30j+'</div><div class="l">Nouveaux 30 jours</div></div><div class="c"><div class="n">'+(s.total?Math.round(100*s2.revenus/s.total):0)+' %</div><div class="l">Reviennent après le 1er jour</div></div><div class="c"><div class="n">'+(s2.anciens_7j?Math.round(100*s2.revenus_7j/s2.anciens_7j):0)+' %</div><div class="l">Anciens encore actifs (7 j)</div></div></div>':'<p class="mu">Pour voir fidélité et exports par jour : exécute admin2.sql dans Supabase.</p>')+
- '<h2>Nouveaux par jour (14 j)</h2><div class="days">'+nj.map(function(x){return '<i title="'+x.jour+': '+x.n+'" style="height:'+(100*x.n/mx)+'%"></i>'}).join("")+'</div><p class="mu">'+(nj.length?nj[0].jour+' → '+nj[nj.length-1].jour:'Aucun nouveau')+'</p>'+
  '<h2>Services les plus utilisés</h2>'+bars(s.services,"nom","n")+
  (s2?'<h2>Services (7 derniers jours)</h2>'+bars(s2.services_7j,'nom','n')+'<h2>Formats exportés</h2>'+bars(s2.formats,'nom','n')+'<h2>Exports par jour (14 j)</h2>'+bars(s2.exports_par_jour,'jour','n'):'')+
  '<h2>Téléchargements par version</h2>'+(dl?(dl.list.length?bars(dl.list,'v','n'):'<p class="mu">Aucun téléchargement depuis la remise à zéro.</p>'):'<p class="mu">GitHub indisponible.</p>')+
- '<h2>Pays des utilisateurs</h2>'+paysBlock(pc)+'<h2>Versions</h2>'+bars(s.versions,"ver","n")+
- '<h2>Plateformes</h2>'+bars(s.plateformes,"plat","n")+
  '<h2>Dernières erreurs</h2>'+(s.erreurs.length?s.erreurs.map(function(e){return '<div class="err"><b>'+esc(e.e)+'</b> · '+esc(new Date(e.t).toLocaleString("fr-FR"))+' · '+esc(e.device)+'<br>'+esc(e.d)+'</div>'}).join(""):'<p class="mu">Aucune erreur 🎉</p>')+
- (dv?devUI(dv):'<p class="mu">Pour séparer ton téléphone des utilisateurs : exécute admin3.sql dans Supabase.</p>')+
  '<h2>Santé</h2><p class="mu">'+(s2?('Dernier signal reçu : '+esc(new Date(s2.dernier_signal).toLocaleString('fr-FR'))+' · Erreurs 7 jours : '+s2.erreurs_7j+' · Base : '+s2.base_mo+' Mo sur 500 Mo gratuits.'):'')+'</p><button class="sec" id="csv">Exporter en CSV</button>'+
  '<h2>Maintenance</h2><p class="mu">'+s.evenements+' événements enregistrés. Le nettoyage supprime ceux de plus de 90 jours.</p><button class="sec" id="pg">Nettoyer</button>';
+$("us").innerHTML='<div class="grid"><div class="hero"><div class="n">'+s.total+'</div><div class="l">Utilisateurs de l\'application (appareils)</div></div><div class="hero"><div class="n">'+s.actifs_7j+'</div><div class="l">Actifs 7 jours</div></div></div>'+
+ '<h2>Nouveaux par jour (14 j)</h2><div class="days">'+nj.map(function(x){return '<i title="'+x.jour+': '+x.n+'" style="height:'+(100*x.n/mx)+'%"></i>'}).join("")+'</div><p class="mu">'+(nj.length?nj[0].jour+' → '+nj[nj.length-1].jour:'Aucun nouveau')+'</p>'+
+ '<h2>Pays des utilisateurs</h2>'+paysBlock(pc)+'<h2>Versions</h2>'+bars(s.versions,"ver","n")+
+ '<h2>Plateformes</h2>'+bars(s.plateformes,"plat","n")+
+ (dv?devUI(dv):'<p class="mu">Pour séparer ton téléphone des utilisateurs : exécute admin3.sql dans Supabase.</p>');
  if($("dvm"))$("dvm").onclick=function(){mark(true,false)};
  if($("dva"))$("dva").onclick=function(){Array.prototype.forEach.call(document.querySelectorAll(".dv"),function(c){c.checked=true});mark(true,true)};
  Array.prototype.forEach.call(document.querySelectorAll("[data-un]"),function(b){b.onclick=async function(){await sb.rpc("admin_mark",{p_ids:[b.getAttribute("data-un")],p_val:false});load()}});
@@ -175,6 +177,6 @@ $("cg").onclick=async function(){
 $("ca").onclick=function(){cp(CODES.join("\n"),$("ca"))};
 boot();codes();
 
-function tab(n){var a=n==2;$("body").classList.toggle("hid",a);$("cr").classList.toggle("hid",!a);$("t1").classList.toggle("on",!a);$("t2").classList.toggle("on",a);if(a)codes();window.scrollTo(0,0)}
-$("t1").onclick=function(){tab(1)};$("t2").onclick=function(){tab(2)};tab(1);
+function tab(n){$("body").classList.toggle("hid",n!=1);$("us").classList.toggle("hid",n!=3);$("cr").classList.toggle("hid",n!=2);$("t1").classList.toggle("on",n==1);$("t3").classList.toggle("on",n==3);$("t2").classList.toggle("on",n==2);if(n==2)codes();window.scrollTo(0,0)}
+$("t1").onclick=function(){tab(1)};$("t3").onclick=function(){tab(3)};$("t2").onclick=function(){tab(2)};tab(1);
 </script></body></html>

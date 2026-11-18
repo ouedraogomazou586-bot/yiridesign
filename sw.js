@@ -1,4 +1,4 @@
-const V="yiri-v287",LIB="yiri-lib";
+const V="yiri-v316",LIB="yiri-lib";
 const FILES=["./","index.html","i18n.js","ui-img.js","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));
@@ -6,7 +6,7 @@ self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.a
  e.waitUntil(caches.open(LIB).then(c=>c.match("u2netp_256.bin").then(m=>m||c.add("u2netp_256.bin"))).catch(()=>{}));});
 // le cache « yiri-lib » (bibliothèque d'images, modèle de détourage) n'est jamais effacé par une mise à jour
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==LIB).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
-function fromCache(req){return caches.open(V).then(c=>c.match(req,{ignoreSearch:true}).then(m=>m||c.match("index.html").then(i=>i||c.match("./"))));}
+function fromCache(req){return caches.open(V).then(c=>c.match(req,{ignoreSearch:true}).then(m=>m||(req.mode==="navigate"?c.match("index.html").then(i=>i||c.match("./")):null)));}
 function isLib(u){const p=new URL(u).pathname;return /\/(assets|models|lib|test_scanic)\//.test(p)||/u2netp_256\.bin$/.test(p);}
 function isFace(u){return /^https:\/\/cdn\.jsdelivr\.net\/npm\/@huggingface\/transformers@/.test(u)||/^https:\/\/cdn\.jsdelivr\.net\/npm\/onnxruntime-web@/.test(u)||/^https:\/\/cdn\.jsdelivr\.net\/npm\/@mediapipe\/tasks-vision@/.test(u)||/^https:\/\/storage\.googleapis\.com\/mediapipe-models\/face_detector\//.test(u);}
 self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;

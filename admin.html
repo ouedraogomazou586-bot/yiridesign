@@ -40,7 +40,8 @@ button{background:var(--ac);color:#062925;font-weight:700;border:0;cursor:pointe
  <div class="two"><div><label class="mu">Nombre de codes</label><input id="cn" type="number" inputmode="numeric" min="1" max="200" value="1"></div>
  <div><label class="mu">Crédits par code</label><input id="cc" type="number" inputmode="numeric" min="1" value="20"></div></div>
  <button id="cg">Créer les codes</button>
- <div class="msg" id="cm"></div><div id="cl"></div><button class="sec hid" id="ca" style="margin-top:8px">Copier tous les codes</button></div>
+ <div class="msg" id="cm"></div><div id="cl"></div>
+ <h2>Codes enregistrés</h2><div id="cs" class="mu">…</div><button class="sec hid" id="ca" style="margin-top:8px">Copier tous les codes</button></div>
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -142,6 +143,13 @@ $("pw").addEventListener("keydown",function(e){if(e.key=="Enter")$("go").click()
 $("lo").onclick=async function(){await sb.auth.signOut();show("l")};
 $("rf").onclick=load;
 function cp(t,b){var d=function(){b.textContent="Copié ✓";setTimeout(function(){b.textContent=b.dataset.l},1200)};try{navigator.clipboard.writeText(t).then(d,function(){})}catch(e){}}
+async function codes(){
+ var r=await sb.rpc("admin_ia_codes");
+ if(r.error){$("cs").innerHTML='<p class="mu">Liste non disponible : '+esc(r.error.message)+'</p>';return}
+ var a=r.data||[],u=a.filter(function(x){return !x.used_at}),d=a.length-u.length;
+ $("cs").innerHTML='<p class="mu">'+u.length+' code(s) disponible(s) · '+d+' déjà utilisé(s)</p>'+(u.length?u.map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr.</span><button class="sec" data-l="Copier" data-c="'+esc(x.code)+'">Copier</button></div>'}).join(""):'<p class="mu">Aucun code disponible.</p>');
+ Array.prototype.forEach.call($("cs").querySelectorAll("button"),function(b){b.onclick=function(){cp(b.dataset.c,b)}});
+}
 var CODES=[];
 $("cg").onclick=async function(){
  var n=parseInt($("cn").value,10),c=parseInt($("cc").value,10);
@@ -149,11 +157,11 @@ $("cg").onclick=async function(){
  $("cm").className="msg";$("cm").textContent="…";$("cg").disabled=true;
  var r=await sb.rpc("admin_ia_gen",{p_n:n,p_credits:c});$("cg").disabled=false;
  if(r.error){$("cm").textContent=/refuse/.test(r.error.message)?"Ce compte n'est pas administrateur.":"Erreur : "+r.error.message;return}
- CODES=r.data||[];$("cm").className="ok";$("cm").textContent=CODES.length+" code(s) créé(s), "+c+" crédits chacun.";
+ CODES=r.data||[];codes();$("cm").className="ok";$("cm").textContent=CODES.length+" code(s) créé(s), "+c+" crédits chacun.";
  $("cl").innerHTML=CODES.map(function(x){return '<div class="cd"><span>'+esc(x)+'</span><button class="sec" data-l="Copier" data-c="'+esc(x)+'">Copier</button></div>'}).join("");
  $("ca").className="sec";$("ca").dataset.l="Copier tous les codes";
  Array.prototype.forEach.call($("cl").querySelectorAll("button"),function(b){b.onclick=function(){cp(b.dataset.c,b)}});
 };
 $("ca").onclick=function(){cp(CODES.join("\n"),$("ca"))};
-boot();
+boot();codes();
 </script></body></html>

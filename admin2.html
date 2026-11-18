@@ -25,6 +25,7 @@ button{background:var(--ac);color:#062925;font-weight:700;border:0;cursor:pointe
 .pb{height:12px;background:var(--bd);border-radius:8px;overflow:hidden;margin:8px 0}.pb i{display:block;height:100%;background:var(--ac)}.hero{background:linear-gradient(135deg,#0f766e,#14b8a6);color:#062925;border-radius:16px;padding:14px}.hero .l{color:#07403a}input.t{width:110px;display:inline-block;margin:0 8px 0 0;padding:8px}
 .days{display:flex;align-items:flex-end;gap:4px;height:70px}.days i{flex:1;max-width:34px;background:var(--ac);border-radius:3px 3px 0 0;min-height:2px}
 .cd{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin:6px 0;font:600 15px ui-monospace,monospace}.cd span{flex:1}.cd button{width:auto;margin:0;padding:6px 10px}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ok{color:var(--ac);margin-top:8px}
+.tabs2{display:flex;gap:8px;margin:10px 0}.tabs2 button{flex:1;margin:0}.tabs2 button.on{background:var(--ac,#14b8a6);color:#04201c}
 </style></head><body>
 <div id="login" class="hid">
  <h1>YiriDesign Admin</h1><p class="mu">Accès réservé.</p>
@@ -34,8 +35,9 @@ button{background:var(--ac);color:#062925;font-weight:700;border:0;cursor:pointe
 </div>
 <div id="dash" class="hid">
  <div class="top"><h1>YiriDesign Admin</h1><div><button class="sec" id="rf">↻</button> <button class="sec" id="lo">Quitter</button></div></div>
+ <div class="tabs2"><button class="sec on" id="t1">📊 Tableau de bord</button><button class="sec" id="t2">🎟️ Codes</button></div>
  <div id="body"><p class="mu">Chargement…</p></div>
-<div id="cr"><h2>Codes de recharge</h2>
+<div id="cr" class="hid"><h2>Codes de recharge</h2>
  <p class="mu">Crée des codes à vendre ou offrir au client. Chaque code donne des crédits IA.</p>
  <div class="two"><div><label class="mu">Nombre de codes</label><input id="cn" type="number" inputmode="numeric" min="1" max="200" value="1"></div>
  <div><label class="mu">Crédits par code</label><input id="cc" type="number" inputmode="numeric" min="1" value="20"></div></div>
@@ -172,4 +174,7 @@ $("cg").onclick=async function(){
 };
 $("ca").onclick=function(){cp(CODES.join("\n"),$("ca"))};
 boot();codes();
+
+function tab(n){var a=n==2;$("body").classList.toggle("hid",a);$("cr").classList.toggle("hid",!a);$("t1").classList.toggle("on",!a);$("t2").classList.toggle("on",a);if(a)codes();window.scrollTo(0,0)}
+$("t1").onclick=function(){tab(1)};$("t2").onclick=function(){tab(2)};tab(1);
 </script></body></html>

@@ -146,9 +146,17 @@ function cp(t,b){var d=function(){b.textContent="Copié ✓";setTimeout(function
 async function codes(){
  var r=await sb.rpc("admin_ia_codes");
  if(r.error){$("cs").innerHTML='<p class="mu">Liste non disponible : '+esc(r.error.message)+'</p>';return}
- var a=r.data||[],u=a.filter(function(x){return !x.used_at}),d=a.length-u.length;
- $("cs").innerHTML='<p class="mu">'+u.length+' code(s) disponible(s) · '+d+' déjà utilisé(s)</p>'+(u.length?u.map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr.</span><button class="sec" data-l="Copier" data-c="'+esc(x.code)+'">Copier</button></div>'}).join(""):'<p class="mu">Aucun code disponible.</p>')+(d?'<h3 style="margin:14px 0 6px;font-size:14px">Codes déjà utilisés</h3>'+a.filter(function(x){return x.used_at}).map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr. · utilisé le '+esc(new Date(x.used_at).toLocaleString('fr-FR'))+'</span></div>'}).join(""):"");
- Array.prototype.forEach.call($("cs").querySelectorAll("button"),function(b){b.onclick=function(){cp(b.dataset.c,b)}});
+ var a=r.data||[],u=a.filter(function(x){return !x.used_at}),us=a.filter(function(x){return x.used_at});
+ function row(x,used){return '<div class="cd"><label style="display:flex;gap:8px;align-items:center;flex:1"><input type="checkbox" class="cx" data-c="'+esc(x.code)+'"><span>'+esc(x.code)+' · '+x.credits+' cr.'+(used?' · utilisé le '+esc(new Date(x.used_at).toLocaleString('fr-FR')):'')+'</span></label>'+(used?'':'<button class="sec" data-l="Copier" data-c="'+esc(x.code)+'">Copier</button>')+'</div>'}
+ $("cs").innerHTML='<p class="mu">'+u.length+' code(s) disponible(s) · '+us.length+' déjà utilisé(s)</p>'+(u.length?u.map(function(x){return row(x,0)}).join(""):'<p class="mu">Aucun code disponible.</p>')+(us.length?'<h3 style="margin:14px 0 6px;font-size:14px">Codes déjà utilisés</h3>'+us.map(function(x){return row(x,1)}).join(""):"")+(a.length?'<button class="sec" id="cdel" style="margin-top:12px;width:100%">Supprimer les codes cochés</button><p class="mu" id="cdm"></p>':"");
+ Array.prototype.forEach.call($("cs").querySelectorAll("button[data-c]"),function(b){b.onclick=function(){cp(b.dataset.c,b)}});
+ var bd=$("cdel");if(bd){var arm=0,tm;bd.onclick=async function(){
+  var ch=Array.prototype.map.call($("cs").querySelectorAll("input.cx:checked"),function(x){return x.dataset.c});
+  if(!ch.length){$("cdm").textContent="Coche d'abord au moins un code.";return}
+  if(!arm){arm=1;bd.textContent="Confirmer : supprimer "+ch.length+" code(s) définitivement";tm=setTimeout(function(){arm=0;bd.textContent="Supprimer les codes cochés"},6000);return}
+  clearTimeout(tm);bd.disabled=true;var q=await sb.rpc("admin_ia_del",{p_codes:ch});bd.disabled=false;arm=0;
+  if(q.error){$("cdm").textContent="Erreur : "+q.error.message;bd.textContent="Supprimer les codes cochés";return}
+  await codes();$("cdm").textContent=(q.data||0)+" code(s) supprimé(s).";}}
 }
 var CODES=[];
 $("cg").onclick=async function(){

@@ -147,7 +147,7 @@ async function codes(){
  var r=await sb.rpc("admin_ia_codes");
  if(r.error){$("cs").innerHTML='<p class="mu">Liste non disponible : '+esc(r.error.message)+'</p>';return}
  var a=r.data||[],u=a.filter(function(x){return !x.used_at}),d=a.length-u.length;
- $("cs").innerHTML='<p class="mu">'+u.length+' code(s) disponible(s) · '+d+' déjà utilisé(s)</p>'+(u.length?u.map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr.</span><button class="sec" data-l="Copier" data-c="'+esc(x.code)+'">Copier</button></div>'}).join(""):'<p class="mu">Aucun code disponible.</p>')+(d?'<h3 style="margin:14px 0 6px;font-size:14px">Codes déjà utilisés</h3>'+a.filter(function(x){return x.used_at}).map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr. · utilisé le '+esc(fmt(x.used_at))+'</span></div>'}).join(""):"");
+ $("cs").innerHTML='<p class="mu">'+u.length+' code(s) disponible(s) · '+d+' déjà utilisé(s)</p>'+(u.length?u.map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr.</span><button class="sec" data-l="Copier" data-c="'+esc(x.code)+'">Copier</button></div>'}).join(""):'<p class="mu">Aucun code disponible.</p>')+(d?'<h3 style="margin:14px 0 6px;font-size:14px">Codes déjà utilisés</h3>'+a.filter(function(x){return x.used_at}).map(function(x){return '<div class="cd"><span>'+esc(x.code)+' · '+x.credits+' cr. · utilisé le '+esc(new Date(x.used_at).toLocaleString('fr-FR'))+'</span></div>'}).join(""):"");
  Array.prototype.forEach.call($("cs").querySelectorAll("button"),function(b){b.onclick=function(){cp(b.dataset.c,b)}});
 }
 var CODES=[];

@@ -929,7 +929,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=320;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=321;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3328,7 +3328,7 @@ function moreParts(){var L=[[mnuUI(),0],[(CUR.kind==="poster"?galHtml():""),1],[
   return L.filter(function(x){return String(x[0]||"").trim();}).map(function(x,k){return x[1]?{k:"p"+k,h:dOpen("p"+k,ptitle(x[0]))+x[0]+"</details>"}:{k:"p"+k,h:x[0]};});}
 function moreHtml(k){var L=moreParts();return k==null?L.map(function(x){return x.h;}).join(""):(L[k]?L[k].h:"");}
 function cpages(){var PG=[],FL=CUR.fields,so=stepsOn(),per=so?99:4,lim=so?99:6;
-  if(so){var LIM=520,cur=[],w=(SUG.has(CUR.id)?58:0)+(CUR.kind==="poster"&&IA.live()?58:0);
+  if(so){var LIM=520,cur=[],w=(SUG.has(CUR.id)?58:0)+(aiOn()&&IA.live()?58:0);
     var add=function(it,px){if(cur.length&&(w+px>LIM||BRK[CUR.id+"|"+(typeof it==="string"?it:it.k)])){PG.push(cur);cur=[];w=0;}cur.push(it);w+=px;};
     FL.filter(function(f){return f.t!=="photo"&&f.t!=="sym";}).forEach(function(f){add(f,fpx(f));});
     moreParts().forEach(function(o,k){add("m"+k,measure(o.h)+8);});
@@ -5631,7 +5631,7 @@ function pane0(){
     var PG=cpages(),FL=CUR.fields;
     if(CP>=PG.length)CP=0;
     if(PG.length>1&&!stepsOn())h+='<div class="steps" style="margin-top:2px">'+PG.map(function(_,i){return '<i'+(i<=CP?' class="on"':'')+'></i>';}).join("")+'</div><div class="hint" style="margin:-8px 0 4px">Partie '+(CP+1)+' sur '+PG.length+'</div>';
-    if(CP===0&&CUR.id==="certif")h+='<label>Type de document</label><div class="seg" id="ct_seg" style="margin-bottom:10px"><button data-c="for"'+(DATA.titre==="CERTIFICAT"?' class="on"':'')+'>Certificat</button><button data-c="par"'+(DATA.titre==="ATTESTATION"?' class="on"':'')+'>Attestation</button></div>';if(CP===0&&SUG.has(CUR.id))h+='<button class="btn sec full" id="sg_open" style="margin:0 0 12px">💡 Idées de textes pour ce service</button>';if(CP===0&&CUR.kind==="poster"&&IA.live())h+='<button class="btn full" id="ai_imp" style="margin:0 0 12px">✨ Améliorer avec l\'IA</button>';
+    if(CP===0&&CUR.id==="certif")h+='<label>Type de document</label><div class="seg" id="ct_seg" style="margin-bottom:10px"><button data-c="for"'+(DATA.titre==="CERTIFICAT"?' class="on"':'')+'>Certificat</button><button data-c="par"'+(DATA.titre==="ATTESTATION"?' class="on"':'')+'>Attestation</button></div>';if(CP===0&&SUG.has(CUR.id))h+='<button class="btn sec full" id="sg_open" style="margin:0 0 12px">💡 Idées de textes pour ce service</button>';if(CP===0&&aiOn()&&IA.live())h+='<button class="btn full" id="ai_imp" style="margin:0 0 12px">✨ Améliorer avec l\'IA</button>';
     if(PG[CP]==="gal")h+=galHtml();
     var _so=stepsOn(),_hm=0,_qo=0,_ce=PG.length-1,_open=false,_w=0,_N=5;if(_so)while(_ce>0&&typeof PG[_ce]==='string')_ce--;if(!_so&&CP===PG.length-1)h+=ceUI()+prmUI()+bdyUI()+cardUI()+mnuUI()+bphUI()+idUI()+exUI();
     (typeof PG[CP]==="string"?[]:PG[CP]).forEach(function(f){
@@ -5662,11 +5662,12 @@ function pane0(){
     if(PG[CP]==="gal"||(_so&&_hm&&CUR.kind==="poster"))galBind();
     if(_so)roleBind(p);if(_so?_hm:CP===PG.length-1){roleBind(p);ceBind(p);prmBind(p);bdyBind(p);cardBind(p);mnuBind(p);bphBind(p);idBind(p);exBind(p);}
     Array.prototype.forEach.call(document.querySelectorAll("#ct_seg button"),function(bt){bt.onclick=function(){SUG.applyCert(bt.getAttribute("data-c"));};});var sgo=document.getElementById("sg_open");if(sgo)sgo.onclick=function(){SUG.open();};
-    var aim=document.getElementById("ai_imp");if(aim)aim.onclick=function(){var EK={sous:1,titre:1,details:1,libre:1},ctx=[],ed=[];
-      CUR.fields.forEach(function(f){if(!(f.t==="text"||f.t==="area"))return;var v=String(DATA[f.k]||"").trim();if(!v&&!EK[f.k])return;ctx.push({k:f.k,l:f.l.replace(/\s*\(.*$/,""),v:v.slice(0,500),edit:EK[f.k]?1:0});});
+    var aim=document.getElementById("ai_imp");if(aim)aim.onclick=function(){var EK={sous:1,titre:1,details:1,libre:1},ctx=[],ed=[],M=AIM[CUR.id]||null,CX=AIC[CUR.id]||[];
+      function gk(f){return M?(M[f.k]||f.k):f.k;}function isE(f){return M?!!M[f.k]:!!EK[f.k];}
+      CUR.fields.forEach(function(f){if(!(f.t==="text"||f.t==="area"))return;if(M&&!M[f.k]&&CX.indexOf(f.k)<0)return;var v=String(DATA[f.k]||"").trim();if(!v&&!isE(f))return;ctx.push({k:gk(f),l:f.l.replace(/\s*\(.*$/,""),v:v.slice(0,500),edit:isE(f)?1:0});});
       IA.call("text",{improve:1,svc:CUR.nom,svcId:CUR.id,lang:(window.I18N&&I18N.lang)||SET.lang||"fr",textes:ctx},function(er,r){if(er){toast(er);return;}
         var nt=r&&r.textes,ch=[];if(!nt||typeof nt!=="object"){toast("Texte vide, réessaie.");return;}
-        CUR.fields.forEach(function(f){if(!EK[f.k]||typeof nt[f.k]!=="string")return;var nv=nt[f.k].replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").trim().slice(0,f.t==="area"?600:160);if(nv&&nv!==String(DATA[f.k]||"").trim())ch.push({k:f.k,l:f.l.replace(/\s*\(.*$/,""),o:String(DATA[f.k]||""),n:nv});});
+        CUR.fields.forEach(function(f){if(!isE(f)||typeof nt[gk(f)]!=="string")return;var nv=nt[gk(f)].replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").trim().slice(0,f.t==="area"?600:160);if(nv&&nv!==String(DATA[f.k]||"").trim())ch.push({k:f.k,l:f.l.replace(/\s*\(.*$/,""),o:String(DATA[f.k]||""),n:nv});});
         if(!ch.length){toast("L'IA n'a rien à changer : ton texte est déjà bon.");return;}
         var o=IA.modal('<h2 style="margin-top:0">✨ Améliorer avec l\'IA</h2><div class="hint">Voici les changements proposés. Rien n\'est modifié tant que tu n\'as pas appliqué.</div>'+ch.map(function(c,i){return '<div style="margin:10px 0;padding:10px;border:1px solid var(--bd,#ccc);border-radius:10px"><label style="display:flex;gap:8px;align-items:center;margin:0;font-weight:600"><input type="checkbox" data-ci="'+i+'" checked style="width:20px;height:20px">'+esc(c.l)+'</label><div class="hint" style="margin:6px 0 2px;text-decoration:line-through">'+esc(c.o||"(vide)")+'</div><div style="white-space:pre-wrap">'+esc(c.n)+'</div></div>';}).join("")+'<div class="row" style="margin-top:10px"><button class="btn sec" id="ai_no">Annuler</button><button class="btn" id="ai_ok">Appliquer</button></div><div class="hint" style="margin-top:8px">Pour les photos : touche « ✨ Détourer avec l\'IA » dans l\'étape Photo.</div>');
         o.querySelector("#ai_no").onclick=function(){o.remove();};
@@ -8778,6 +8779,9 @@ function tplApply(id){
   VID.tpl=t.id;VID.th=t.th;VID.tot=(t.mode==="ad"?(SET.vtot==null?30:SET.vtot):0);VID.mode=t.mode;VID.dur=t.dur;VID.fx=t.fx;VID.fmt=t.fmt;VID.intro=!!t.intro;VID.endc=t.endc!==false;VID.fps=t.fps||0;if(t.pfit)VID.pfit=t.pfit;
   SET.vtpl=t.id;try{saveSet();}catch(e){}
 }
+/* v321 : « Améliorer avec l'IA » pour les services sérieux : champ de la fiche -> champ générique du serveur */
+var AIM={carte:{slogan:"sous",poste:"titre"},menu:{sous:"sous"},certif:{motif:"libre"},facture:{mention:"libre"},page:{slogan:"sous",desc:"details"}},AIC={carte:["ent","nom"],menu:["titre"],certif:["org","titre"],facture:[],page:["nom"]};
+function aiOn(){return !!CUR&&(CUR.kind==="poster"||!!AIM[CUR.id]);}
 /* ===== IA payante par crédits (v109) : INACTIVE tant que l'administrateur ne l'active pas ===== */
 var IA=(function(){
   var BASE="https://segdgrecoreoqvrqwavj.supabase.co",KEY="sb_publishable_D7vXRASIe4twImyViuzW-A_d3JCvRl8",K="yiri_ia",d=null,busy=false,bal=null;

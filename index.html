@@ -929,7 +929,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=323;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=325;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -8177,6 +8177,11 @@ function ltVars(D){var lg=D.lang||"fr";if(lg==="fr")return LTV[D.lt]||[];return 
 function ltDate(d){var lg=d.lang||"fr",S=LTSH[lg]||LTSH.fr,now=new Date(),dt;
   try{dt=lg==="fr"?now.toLocaleDateString("fr-FR"):now.toLocaleDateString(S.loc,{day:"numeric",month:"long",year:"numeric"});}catch(e){dt=now.toLocaleDateString();}
   return (d.lville?d.lville+(lg==="fr"?", le ":", "):(lg==="fr"?"Le ":""))+dt;}
+/* v324 : « Fait à … le … » en bas de la lettre */
+function ltFait(d){if(String(d.lfait||"").trim())return String(d.lfait).trim();var lg=d.lang||"fr",S=LTSH[lg]||LTSH.fr,now=new Date(),dt;
+  try{dt=lg==="fr"?now.toLocaleDateString("fr-FR"):now.toLocaleDateString(S.loc,{day:"numeric",month:"long",year:"numeric"});}catch(e){dt=now.toLocaleDateString();}
+  var T={fr:["Fait à ",", le ","Le "],en:["Signed in ",", on ",""],es:["En ",", a ",""],pt:["Feito em ",", a ",""],de:["",", den ",""],ar:["حُرّر في ","، بتاريخ ",""],zh:["于","，",""]}[lg]||["",", ",""],v=String(d.lville||"").trim();
+  return v?(T[0]+v+T[1]+dt):(T[2]+dt);}
 function ltObj(d){var S=LTSH[d.lang||"fr"]||LTSH.fr;return S.obj;}
 function cvLetterGen(){var lg=CVD.lang||"fr",f=[CVD.l1,CVD.l2,CVD.l3];
   if(lg!=="fr"&&LTI[lg]&&LTI[lg][CVD.lt]){var T=LTI[lg][CVD.lt],vs=ltVars(CVD),v=vs[CVD.lv|0];CVD.lobj=ltRender(T.o,f);CVD.lcorps=ltRender((v&&v[1])?v[1]:T.b,f);return;}
@@ -8197,7 +8202,10 @@ function cvLetter(d){
   if(d.ldest){para(d.ldest,34,"bold","#111",1.4,W/2+60,W/2-m-60);y+=40;}
   if(d.lobj){para(ltObj(d)+d.lobj,36,"bold","#111",1.4);y+=30;}
   para(d.lcorps,33,"normal","#111",1.55);
-  y+=70;if(y>H-m-200)np();para(d.nom||"",36,"bold","#111",1.4,W-m,W/2-m,"right");
+  y+=70;var hasSg=!!(d.sig&&CVSIGIMG&&CVSIGIMG.complete&&CVSIGSRC===d.sig);if(y>H-m-(hasSg?420:260))np();
+  para(ltFait(d),32,"normal","#111",1.4,W-m,W-2*m,"right");y+=14;
+  if(hasSg){var sr=Math.min(360/CVSIGIMG.width,130/CVSIGIMG.height),sw=CVSIGIMG.width*sr,sh=CVSIGIMG.height*sr;x.drawImage(CVSIGIMG,RTL?m:W-m-sw,y,sw,sh);y+=sh+14;}else y+=70;
+  para(d.nom||"",36,"bold","#111",1.4,W-m,W/2-m,"right");
   return pages;
 }
 /* ----- Word (.docx) ----- */
@@ -8248,7 +8256,7 @@ function cvLetterDocx(d){
   if(d.ldest)String(d.ldest).split("\n").forEach(function(l){b+=p(l,{b:1,af:0,al:"left"});});
   b+=p("",{});if(d.lobj)b+=p(ltObj(d)+d.lobj,{b:1,af:200});
   String(d.lcorps||"").split("\n").forEach(function(l){b+=p(l,{af:l.trim()?100:60});});
-  b+=p("",{})+p(d.nom||"",{b:1,al:"right"});
+  b+=p("",{})+p(ltFait(d),{al:"right",af:600})+p(d.nom||"",{b:1,al:"right"});
   return cvDocxPack(b,FN,null);
 }
 /* ----- écran ----- */
@@ -8378,10 +8386,12 @@ function cvScreen(){
     if(si===0)h+='<label>Type de lettre</label><select id="lt_t">'+tys.map(function(k){return '<option value="'+k+'"'+(D.lt===k?' selected':'')+'>'+esc(LTY[k][0])+'</option>';}).join("")+'</select>'
      +'<label>Langue de la lettre</label>'+seg("cv_l",CVLG,D.lang).replace('class="seg"','class="seg" style="flex-wrap:wrap"')
      +(lvs.length>1?'<label>'+TT("Modèle de texte")+'</label>'+seg("lt_v",lvs.map(function(v,i){return [i,TT(v[0])];}),D.lv|0):'')+'<button class="btn sec full" id="lt_ex" style="margin-top:8px">✨ '+TT("Remplir avec un exemple")+'</button>';
-    else if(si===1)h+=inp("nom","Mon nom complet")+inp("tel","Téléphone")+inp("mail","E-mail")+inp("adr","Mon adresse")+inp("lville","Ville (pour la date)","Ouagadougou");
+    else if(si===1)h+=inp("nom","Mon nom complet")+inp("tel","Téléphone")+inp("mail","E-mail")+inp("adr","Mon adresse")+inp("lville","Ville (pour la date)","Ouagadougou")
+     +'<label>'+TT("Ma signature (facultatif)")+'</label><div class="row"><button class="btn sec" id="dc_sg" style="flex:1">✍ '+TT("Dessiner ma signature")+'</button>'+(D.sig?'<button class="btn sec" id="dc_sx" style="flex:1">'+TT("Retirer la signature")+'</button>':'')+'</div>'
+     +(D.sig?'<div style="text-align:center;margin-top:8px"><img src="'+D.sig+'" alt="" style="max-width:240px;max-height:90px;background:#fff;border:1px solid var(--bd);border-radius:8px"></div>':'');
     else if(si===2)h+='<label>Destinataire (une information par ligne)</label><textarea data-k="ldest" rows="3" placeholder="Monsieur le Directeur&#10;Société Faso">'+esc(D.ldest)+'</textarea>'
      +(LTY[D.lt][1].map(function(lb,i){return '<label>'+esc(lb)+'</label><input type="text" data-k="l'+(i+1)+'" value="'+esc(D["l"+(i+1)])+'">';}).join(""));
-    else if(si===3)h+='<button class="btn sec full" id="lt_gen" style="margin-top:8px">↻ '+TT("Écrire / mettre à jour la lettre")+'</button>'+(IA.live()?'<button class="btn full" id="lt_ai" style="margin-top:8px">✨ '+TT("Rédiger avec l\'IA")+'</button>':'')+inp("lobj","Objet")+area("lcorps","Texte de la lettre (modifiable)",12)+(D.lang==="fr"?'<button class="btn sec full" id="cv_spell" style="margin-top:10px">✔ '+TT("Vérifier l'orthographe")+'</button>':'');
+    else if(si===3)h+='<button class="btn sec full" id="lt_gen" style="margin-top:8px">↻ '+TT("Écrire / mettre à jour la lettre")+'</button>'+(IA.live()?'<button class="btn full" id="lt_ai" style="margin-top:8px">✨ '+TT("Rédiger avec l\'IA")+'</button>':'')+inp("lobj","Objet")+area("lcorps","Texte de la lettre (modifiable)",12)+'<label>'+TT("Ligne « Fait à … » (modifiable)")+'</label><input type="text" data-k="lfait" value="'+esc(D.lfait||"")+'" placeholder="'+esc(ltFait(Object.assign({},D,{lfait:""})))+'"><div class="hint">'+esc(TT("Laisse vide pour écrire automatiquement la ville et la date du jour."))+'</div>'+(D.lang==="fr"?'<button class="btn sec full" id="cv_spell" style="margin-top:10px">✔ '+TT("Vérifier l'orthographe")+'</button>':'');
     else h+='<label>Style</label>'+seg("lt_s",[["cla","Classique"],["bar","Barre de couleur"],["mod","Bandeau"]],D.lstyle)+colors();
   }
   if(last)h+='<div id="cv_pvbox" style="margin-top:12px"></div><div class="hint" style="margin-top:8px">'+TT("Tes informations restent sur ton téléphone.")+'</div><button class="btn full" id="cv_wa" style="background:#16a34a;margin-top:10px">💬 '+TT("Envoyer sur WhatsApp")+'</button><div class="row" style="margin-top:8px"><button class="btn sec" id="cv_dl" style="flex:1">⬇ PDF</button><button class="btn sec" id="cv_dw" style="flex:1">⬇ Word</button></div>';
@@ -8429,7 +8439,7 @@ function cvScreen(){
   var pf=$("cv_pf");if($("cv_ph"))$("cv_ph").onclick=function(){pf.click();};
   if(pf)pf.onchange=function(){var f=this.files[0];if(!f)return;imgShrink(f,500,function(u){if(u){D.photo=u;cvSave();cvScreen();}});};
   if($("cv_phx"))$("cv_phx").onclick=function(){D.photo="";cvSave();cvScreen();};
-  function pagesNow(cb){cvPhoto(function(ph){cb(D.tab==="cv"?cvRender(D,ph):cvLetter(D));});}
+  function pagesNow(cb){cvSigLoad(function(){cvPhoto(function(ph){cb(D.tab==="cv"?cvRender(D,ph):cvLetter(D));});});}
   function go(n){CVST[kk]=n;cvSave();cvScreen();try{window.scrollTo(0,0);}catch(e){}}
   if($("cv_prev"))$("cv_prev").onclick=function(){go(si-1);};if($("cv_next"))$("cv_next").onclick=function(){go(si+1);};
   var dco=$("dc_on");if(dco)dco.onchange=function(){D.decl=dco.checked;cvSave();};

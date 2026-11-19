@@ -929,7 +929,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=316;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=318;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -8799,8 +8799,18 @@ var IA=(function(){
       rpc("ia_redeem",{p_device:did(),p_code:v},function(e,r){b.disabled=false;if(e||!r){m.textContent=msg(e||"reseau");return;}if(r.ok===false){m.textContent=r.error;return;}bal=r.solde;toast(r.jours>0?"Abonnement activé":"+"+r.credits+" crédits ajoutés");after(r.solde);});};}
   var CODEHTML='<label>J\'ai un code de recharge</label><input type="text" id="ia_code" placeholder="YIRI-XXXX-XXXX" autocapitalize="characters" style="width:100%"><button class="btn full" id="ia_go" style="margin-top:8px">Valider le code</button><div class="hint" id="ia_msg"></div>';
   function waLink(txt){var n=((d&&d.v&&d.v.paiement&&d.v.paiement.whatsapp)||"").replace(/[^0-9]/g,"");return n?"https://wa.me/"+n+"?text="+encodeURIComponent(txt+" — appareil : "+did()):"";}
+  /* v317 : 1 crédit d'essai offert (une fois par téléphone, géré côté serveur) */
+  function essaiUI(box,after,okTxt){var z=box.querySelector("#ia_es");if(!z||z.getAttribute("data-s"))return;z.setAttribute("data-s","1");
+    rpc("ia_essai_dispo",{p_device:did()},function(e,ok){if(e||ok!==true)return;
+      z.innerHTML='<button class="btn full" id="ia_eb" style="margin:8px 0">🎁 Essayer gratuitement</button><div class="hint" id="ia_em"></div>';
+      var b=z.querySelector("#ia_eb"),m=z.querySelector("#ia_em");
+      b.onclick=function(){b.disabled=true;m.textContent="…";
+        rpc("ia_essai_claim",{p_device:did()},function(e2,r){
+          if(e2||!r||r.ok!==true){b.disabled=false;m.textContent=e2==="reseau"?msg("reseau"):"Offre indisponible pour le moment.";return;}
+          z.innerHTML='<div class="card" style="padding:10px;margin:8px 0">🎁 1 crédit offert ! '+esc(okTxt)+'</div>';toast("🎁 1 crédit offert");
+          solde(function(v){after(v);});});};});}
   function wallet(){var of=offres(),pay=(d&&d.v&&d.v.paiement)||{};
-    var h='<h2 style="margin-top:0">💎 Premium</h2><div style="font-size:26px;font-weight:800" id="ia_bal">…</div><div class="hint" id="ia_abo"></div><div class="hint">Les crédits et l\'abonnement sont liés à ce téléphone.</div>';
+    var h='<h2 style="margin-top:0">💎 Premium</h2><div style="font-size:26px;font-weight:800" id="ia_bal">…</div><div class="hint" id="ia_abo"></div><div class="hint">Les crédits et l\'abonnement sont liés à ce téléphone.</div><div id="ia_es"></div>';
     if(of&&((of.packs&&of.packs.length)||of.abo)){
       h+='<h3 style="margin:14px 0 6px">Choisis ton offre</h3>';
       if(of.abo)h+='<div class="card" style="padding:12px;margin-bottom:8px;border:2px solid var(--ac,#e8a)"><b>Abonnement mensuel</b><div class="hint">Voix off et fonctions IA incluses pendant la durée de l\'abonnement (dans la limite du jour).</div><div style="font-size:20px;font-weight:800">'+esc(of.abo.prix||"")+'</div><button class="btn full" data-o="abo">Choisir l\'abonnement</button></div>';
@@ -8813,7 +8823,7 @@ var IA=(function(){
     function refresh(){stat(function(v){if(v)paint(v.solde,v.abo);});}
     o.querySelector("#ia_px").innerHTML='Prix à l\'unité : texte <b>'+price("text")+'</b> · fond de photo <b>'+price("bg")+'</b> · voix off <b>'+price("voix")+'</b> crédit(s)';
     o.querySelectorAll("[data-o]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-o"),t=k==="abo"?"Bonjour, je veux l'abonnement mensuel YiriDesign Premium ("+((of.abo&&of.abo.prix)||"")+")":"Bonjour, je veux acheter "+of.packs[+k.slice(1)].credits+" crédits YiriDesign ("+of.packs[+k.slice(1)].prix+")";var l=waLink(t);if(l)window.open(l,"_blank");else toast("Contact indisponible pour le moment.");};});
-    o.querySelector("#ia_x").onclick=function(){o.remove();};paint(null,null);refresh();redeemUI(o,refresh);}
+    o.querySelector("#ia_x").onclick=function(){o.remove();};paint(null,null);refresh();redeemUI(o,refresh);if(live())essaiUI(o,function(){refresh();},"Essaie la voix off ou l\'écriture IA. Tu as aimé ? Choisis un pack.");}
   /* v278 : la voix off IA est réservée aux adultes (18 ans ou plus) : confirmation demandée une seule fois */
   function age18(){try{return localStorage.getItem("yiri_age18")==="1";}catch(e){return false;}}
   function ageGate(go){
@@ -8828,10 +8838,10 @@ var IA=(function(){
     if(!navigator.onLine){toast("L'IA demande une connexion internet.");return;}
     if(kind==="voix"&&!age18()){ageGate(function(){call(kind,payload,cb);});return;}
     var cost=price(kind),names={text:"écrire des textes",bg:"traiter la photo",voix:"générer la voix off",clip:"créer le clip",fond:"créer un fond d'affiche",ocr:"lire le texte de l'image"};
-    var o=modal('<h2 style="margin-top:0">✨ Intelligence artificielle</h2><div>Cette action ('+names[kind]+') coûte <b>'+cost+' crédit'+(cost>1?'s':'')+'</b>.</div><div class="hint" id="ia_b">Vérification de ton solde…</div><div id="ia_rd" style="display:none">'+CODEHTML+'</div><div class="row" style="margin-top:10px"><button class="btn sec" id="ia_no">Annuler</button><button class="btn" id="ia_ok" disabled>Confirmer</button></div>');
+    var o=modal('<h2 style="margin-top:0">✨ Intelligence artificielle</h2><div>Cette action ('+names[kind]+') coûte <b>'+cost+' crédit'+(cost>1?'s':'')+'</b>.</div><div class="hint" id="ia_b">Vérification de ton solde…</div><div id="ia_es"></div><div id="ia_rd" style="display:none">'+CODEHTML+'</div><div class="row" style="margin-top:10px"><button class="btn sec" id="ia_no">Annuler</button><button class="btn" id="ia_ok" disabled>Confirmer</button></div>');
     o.querySelector("#ia_no").onclick=function(){o.remove();};
     function upd(v){var b=o.querySelector("#ia_b"),ok=o.querySelector("#ia_ok");if(v==null){b.textContent="Solde indisponible : vérifie ta connexion.";return;}
-      b.innerHTML='Ton solde : <b>'+v+'</b> crédit(s).';if(v>=cost){ok.disabled=false;o.querySelector("#ia_rd").style.display="none";}else{b.innerHTML+=' Il t\'en faut plus.';o.querySelector("#ia_rd").style.display="block";redeemUI(o,upd);}}
+      b.innerHTML='Ton solde : <b>'+v+'</b> crédit(s).';if(v>=cost){ok.disabled=false;o.querySelector("#ia_rd").style.display="none";}else{b.innerHTML+=' Il t\'en faut plus.';o.querySelector("#ia_rd").style.display="block";redeemUI(o,upd);essaiUI(o,upd,"Tu peux maintenant confirmer.");}}
     stat(function(v){if(v&&v.abo){var b=o.querySelector("#ia_b");b.innerHTML="Inclus dans ton abonnement Premium.";o.querySelector("#ia_ok").disabled=false;o.querySelector("#ia_rd").style.display="none";}else upd(v?v.solde:null);});
     o.querySelector("#ia_ok").onclick=function(){var b=this;b.disabled=true;o.querySelector("#ia_b").textContent="Travail de l'IA en cours… (jusqu'à une minute)";
       var ac=window.AbortController?new AbortController():null,tm=setTimeout(function(){try{ac&&ac.abort();}catch(e){}},90000);
@@ -8839,8 +8849,29 @@ var IA=(function(){
       .then(function(r){return r.json().catch(function(){return {ok:false,error:"x"};});}).then(function(j){clearTimeout(tm);o.remove();
         if(j&&j.ok){if(typeof j.solde==="number")bal=j.solde;cb(null,j);}else cb(msg(j&&j.error),null);})
       .catch(function(){clearTimeout(tm);o.remove();cb(msg("reseau"),null);});};}
+  /* v318 : exécution directe (sans fenêtre) et voix longue en plusieurs parties */
+  function exec(kind,payload,cb){
+    var ac=window.AbortController?new AbortController():null,tm=setTimeout(function(){try{ac&&ac.abort();}catch(e){}},90000);
+    fetch(BASE+"/functions/v1/"+(SET.iaFn||"swift-processor"),{method:"POST",headers:{"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+KEY},body:JSON.stringify({device:did(),kind:kind,payload:payload}),signal:ac?ac.signal:undefined})
+    .then(function(r){return r.json().catch(function(){return {ok:false,error:"x"};});}).then(function(j){clearTimeout(tm);if(j&&j.ok){if(typeof j.solde==="number")bal=j.solde;cb(null,j);}else cb(msg(j&&j.error),null);})
+    .catch(function(){clearTimeout(tm);cb(msg("reseau"),null);});}
+  function callMulti(kind,payloads,cb){
+    if(!live()){toast("L'IA n'est pas disponible pour le moment.");return;}
+    if(!navigator.onLine){toast("L'IA demande une connexion internet.");return;}
+    if(kind==="voix"&&!age18()){ageGate(function(){callMulti(kind,payloads,cb);});return;}
+    var n=payloads.length,cost=price(kind)*n;
+    var o=modal('<h2 style="margin-top:0">✨ Intelligence artificielle</h2><div>'+esc(TT("Voix longue :"))+' <b>'+n+' × '+esc(TT("voix de 40 s environ"))+'</b> · <b>'+cost+'</b> '+esc(TT("crédits au total"))+'.</div><div class="hint" id="ia_b">Vérification de ton solde…</div><div id="ia_es"></div><div id="ia_rd" style="display:none">'+CODEHTML+'</div><div class="row" style="margin-top:10px"><button class="btn sec" id="ia_no">Annuler</button><button class="btn" id="ia_ok" disabled>Confirmer</button></div>');
+    o.querySelector("#ia_no").onclick=function(){o.remove();};
+    function upd(v){var b=o.querySelector("#ia_b"),ok=o.querySelector("#ia_ok");if(v==null){b.textContent="Solde indisponible : vérifie ta connexion.";return;}
+      b.innerHTML='Ton solde : <b>'+v+'</b> crédit(s).';if(v>=cost){ok.disabled=false;o.querySelector("#ia_rd").style.display="none";}else{b.innerHTML+=' Il t\'en faut plus.';o.querySelector("#ia_rd").style.display="block";redeemUI(o,upd);essaiUI(o,upd,"Tu peux maintenant confirmer.");}}
+    stat(function(v){if(v&&v.abo){o.querySelector("#ia_b").innerHTML="Inclus dans ton abonnement Premium.";o.querySelector("#ia_ok").disabled=false;o.querySelector("#ia_rd").style.display="none";}else upd(v?v.solde:null);});
+    o.querySelector("#ia_ok").onclick=function(){this.disabled=true;var res=[],i=0;
+      function next(){if(i>=n){o.remove();cb(null,res);return;}
+        o.querySelector("#ia_b").textContent=TT("Partie en cours :")+" "+(i+1)+"/"+n+" … (jusqu'à une minute)";
+        exec(kind,payloads[i],function(e,j){if(e){o.remove();cb(e,res);return;}res.push(j);i++;next();});}
+      next();};}
   window.addEventListener("online",function(){setTimeout(load,1500);});setTimeout(load,3500);
-  return {live:live,load:load,call:call,wallet:wallet,price:price,offres:offres,modal:modal};
+  return {live:live,load:load,call:call,callMulti:callMulti,wallet:wallet,price:price,offres:offres,modal:modal};
 })();
 function iaShrink(im,max,cb){var r=Math.min(1,max/Math.max(im.width,im.height)),c=mk(Math.round(im.width*r),Math.round(im.height*r)),x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/jpeg",0.88).split(",")[1];}
 function iaLoadImg(b64,mime,cb){var im=new Image();im.onload=function(){cb(im);};im.onerror=function(){cb(null);};im.src="data:"+mime+";base64,"+b64;}
@@ -8917,6 +8948,23 @@ function frN(n){var u,h,r;if(n<20)return FRU[n];
   if(n<100){u=n-80;return u===0?"quatre-vingts":"quatre-vingt-"+FRU[u];}
   h=Math.floor(n/100);r=n%100;return (h===1?"cent":FRU[h]+" cent"+(r?"":"s"))+(r?" "+frN(r):"");}
 function vFr(t){return String(t).replace(/\b([Ss])ix\b/g,"$1isse");}
+function vCut(t,m){t=String(t||"").trim();if(t.length<=m)return t;var c=t.slice(0,m),re=/[.!?…](?=\s|$)/g,x,last=-1;while((x=re.exec(c)))last=x.index;if(last>=m*0.4)return c.slice(0,last+1).trim();var i=c.lastIndexOf(" ");return (i>m*0.4?c.slice(0,i):c).trim();}
+function vSplit(t,m){var out=[];t=String(t||"").trim();while(t.length>m){var p=vCut(t,m);if(!p)p=t.slice(0,m);out.push(p);t=t.slice(p.length).trim();}if(t)out.push(t);return out;}
+function vLong(){try{return REMOTE.get().f.voix_longue===true;}catch(e){return false;}}
+function vWav(f,sr){var n=f.length,b=new ArrayBuffer(44+n*2),v=new DataView(b);function w(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+  w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);
+  for(var i=0;i<n;i++){var q=Math.max(-1,Math.min(1,f[i]));v.setInt16(44+i*2,q<0?q*32768:q*32767,true);}return new Uint8Array(b);}
+function vAssemble(list,cb){try{var AC=window.AudioContext||window.webkitAudioContext,ac=new AC(),bufs=[],i=0;
+  function done(){try{ac.close();}catch(x){}
+    if(!bufs.length||bufs.indexOf(null)>-1){cb(null,null);return;}
+    var sr=bufs[0].sampleRate,gap=Math.round(0.3*sr),tot=0;bufs.forEach(function(b){tot+=b.length;});tot+=gap*(bufs.length-1);
+    var out=new Float32Array(tot),pos=0;bufs.forEach(function(b,k){var d=b.getChannelData(0);out.set(d,pos);pos+=d.length+(k<bufs.length-1?gap:0);});
+    var ab;try{ab=new AudioBuffer({numberOfChannels:1,length:tot,sampleRate:sr});ab.copyToChannel(out,0);}catch(x){cb(null,null);return;}
+    cb(ab,vWav(out,sr));}
+  function next(){if(i>=list.length){done();return;}var bin=atob(list[i]),u=new Uint8Array(bin.length);for(var k=0;k<bin.length;k++)u[k]=bin.charCodeAt(k);
+    ac.decodeAudioData(u.buffer,function(b){bufs.push(b);i++;next();},function(){bufs.push(null);i++;next();});}
+  next();}catch(e){cb(null,null);}}
+
 function vVoiceDB(cb){try{var r=indexedDB.open("yiri-voix",1);r.onupgradeneeded=function(){r.result.createObjectStore("v");};r.onsuccess=function(){cb(r.result);};r.onerror=function(){cb(null);};}catch(e){cb(null);}}
 function vSaveVoice(u,txt){vVoiceDB(function(db){if(!db)return;try{var s=db.transaction("v","readwrite").objectStore("v");if(u)s.put({raw:u.buffer.slice(0),txt:txt||"",nom:(VID.pd&&VID.pd.nom)||"",at:Date.now()},"last");else s.delete("last");}catch(e){}});}
 function vLoadVoice(cb){vVoiceDB(function(db){if(!db)return;try{var g=db.transaction("v","readonly").objectStore("v").get("last");g.onsuccess=function(){var o=g.result;if(!o||!o.raw||Date.now()-o.at>7*864e5||o.nom!==((VID.pd&&VID.pd.nom)||""))return;
@@ -9384,11 +9432,12 @@ function videoScreen(){
       SET.vpd=VID.pd;try{saveSet();}catch(x){}toast("Textes ajoutés : relis-les et modifie-les si besoin.");});};
   var iaw=document.getElementById("ia_w");if(iaw)iaw.onclick=function(){IA.wallet();};
   var vtx=document.getElementById("v_vtx");
-  if(vtx){var vh=document.getElementById("v_vh"),vp=document.getElementById("v_vply"),vx=document.getElementById("v_vx"),vv=document.getElementById("v_vv"),vd=document.getElementById("v_vd"),vt=document.getElementById("v_vt");
+  if(vtx){vtx.maxLength=vLong()?1800:600;var vh=document.getElementById("v_vh"),vp=document.getElementById("v_vply"),vx=document.getElementById("v_vx"),vv=document.getElementById("v_vv"),vd=document.getElementById("v_vd"),vt=document.getElementById("v_vt");
     function vUI(){vp.style.display=VID.voice?"":"none";vx.style.display=VID.voice?"":"none";vh.textContent=VID.voice?"Voix prête : "+Math.round(VID.voice.duration)+" s, ajoutée au début de la vidéo (la musique baisse pendant la voix)."+(function(){var e=0;try{e=vidEstimate();}catch(x){}var vdu=VID.voice.duration;return e&&vdu+1.8>e?(vdu/1.3+1.8>e?" ⚠ La voix est plus longue que la vidéo : raccourcis le texte.":" La voix sera légèrement accélérée pour tenir dans la vidéo."):"";})():(IA.live()?"Pas de voix off.":"Active Premium pour générer la voix. Tu peux déjà préparer ton texte.");}
     function vWords(t){t=(t||"").trim();return t?t.split(/\s+/).length:0;}
     function vCnt(){var c=document.getElementById("v_vc");if(!c)return;var w=vWords(vtx.value),e=0;try{e=vidEstimate();}catch(x){}var vs=Math.round(w/2.4*10)/10;
-      c.textContent=w?("Lecture : environ "+Math.round(vs)+" s"+(e?" · vidéo : "+Math.round(e)+" s":"")+(e&&vs+1.8>e?(vs+1.8>e*1.3?" ⚠ Texte trop long : raccourcis-le.":" · la voix sera légèrement accélérée."):"")):"";}
+      c.textContent=w?("Lecture : environ "+Math.round(vs)+" s"+(e?" · vidéo : "+Math.round(e)+" s":"")+(e&&vs+1.8>e?(vs+1.8>e*1.3?" ⚠ Texte trop long : raccourcis-le.":" · la voix sera légèrement accélérée."):"")):"";
+      if(vLong()){var np=vSplit(vtx.value,600).length;if(np>1)c.textContent+=" · "+TT("Voix longue :")+" "+np+" × "+TT("voix de 40 s environ")+" = "+np+" "+TT("crédits au total");}}
     function vAuto(){var sc=[],nm=(BR.nom||"").trim(),tel=(VID.pd.tel||BR.tel||"").trim(),e=0;try{e=vidEstimate();}catch(x){}
       var bud=e?Math.max(8,Math.floor((e-3.4)*2.2)):60,fill=["Contactez-nous dès maintenant pour plus d'informations."];
       function dot(t){t=String(t).trim();return /[.!?…]$/.test(t)?t:t+".";}
@@ -9415,14 +9464,24 @@ function videoScreen(){
     if(vai)vai.onclick=function(){var e=0;try{e=vidEstimate();}catch(x){}var d={},sv="",pd=VID.pd||{},tel=(pd.tel||BR.tel||"").trim(),cn="";
       VCATS.forEach(function(c){if(c[0]===(SET.vcat||"other"))cn=c[1];});
       if(VID.mode==="ad"){try{d=(adStyle().d)||{};}catch(x){}sv=(d.serv||"").split("\n").map(function(l){return l.split("|")[0].trim();}).filter(Boolean).slice(0,6).join("\n");}
-      var pl={script:1,mode:VID.mode==="ad"?"ad":(VID.mode==="prod"?"prod":"brand"),duree:Math.round(e||30),ton:vt.value||"chaleureux",lang:(window.I18N&&I18N.lang)||SET.lang||"fr",catCode:SET.vcat||"other",cat:cn,
+      var pl={script:1,mode:VID.mode==="ad"?"ad":(VID.mode==="prod"?"prod":"brand"),duree:(vLong()?Math.round(e||30):Math.min(40,Math.round(e||30))),maxc:(vLong()?1800:600),ton:vt.value||"chaleureux",lang:(window.I18N&&I18N.lang)||SET.lang||"fr",catCode:SET.vcat||"other",cat:cn,
         nom:VID.mode==="ad"?(d.titre||BR.nom||""):(VID.mode==="prod"?(pd.nom||""):(BR.nom||"")),prix:pd.prix||"",accroche:VID.mode==="prod"?(pd.acc||""):"",atouts:VID.mode==="prod"?(pd.av||""):"",
         slogan:VID.mode==="ad"?(d.slogan||""):(VID.mode==="brand"?(BR.slogan||""):""),services:sv,cta:pd.cta||"",tel:tel};
       if(!pl.nom.trim()){toast("Remplis d'abord le nom ou la fiche de ta pub.");return;}
       IA.call("text",pl,function(er,r){if(er){toast(er);return;}var t=(r&&(r.texte||r.script)||"").trim();if(!t){toast("Texte vide, réessaie.");return;}
-        vtx.value=t.slice(0,600);VID.vtx=vtx.value;VID.vtxAuto=undefined;vCnt();toast("Texte prêt : relis-le, puis touche « Générer la voix ».");});};
+        vtx.value=vCut(t,vLong()?1800:600);VID.vtx=vtx.value;VID.vtxAuto=undefined;vCnt();toast("Texte prêt : relis-le, puis touche « Générer la voix ».");});};
     document.getElementById("v_vgen").onclick=function(){var t=(vtx.value||"").trim();if(t.length<3){toast("Écris le texte à lire.");return;}
       if(!IA.live()){IA.wallet();return;}
+      var parts=vLong()?vSplit(t,600):[t];
+      if(parts.length>1){
+        var cache=VID.lvCache||(VID.lvCache={}),key=function(p){return p+"|"+(vv.value||"auto")+"|"+(vt.value||"")},need=parts.filter(function(p){return !cache[key(p)];});
+        var fin=function(){vAssemble(parts.map(function(p){return cache[key(p)];}),function(buf,wav){if(!buf){toast("Voix illisible");return;}VID.voice=vTrimVoice(buf);VID.voiceRaw=wav;VID.vtxUsed=t;VID.lvCache={};vSaveVoice(wav,t);vUI();vCnt();toast("Voix prête");});};
+        if(!need.length){fin();return;}
+        IA.callMulti("voix",need.map(function(p){return {texte:vFr(p),voix:vv.value||"auto",ton:vt.value,catCode:SET.vcat||"other"};}),function(e,res){
+          (res||[]).forEach(function(j,i){if(j&&j.audio)cache[key(need[i])]=j.audio;});
+          if(e){toast(e+((res&&res.length)?" "+TT("Les parties déjà faites sont gardées."):""));return;}
+          fin();});
+        return;}
       IA.call("voix",{texte:vFr(t),voix:vv.value||"auto",ton:vt.value,catCode:SET.vcat||"other"},function(e,r){if(e){toast(e);return;}
         var bin=atob(r.audio),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
         try{var ac=new (window.AudioContext||window.webkitAudioContext)();ac.decodeAudioData(u.buffer,function(b){try{ac.close();}catch(x){}VID.voice=vTrimVoice(b);VID.voiceRaw=u;VID.vtxUsed=t;vSaveVoice(u,t);vUI();vCnt();toast("Voix prête");},function(){try{ac.close();}catch(x){}toast("Voix illisible");});}catch(x){toast("Voix illisible");}});};

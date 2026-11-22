@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.yiridesign.app",
+    "sha256_cert_fingerprints": ["17:B9:C0:7B:A2:F0:25:CF:7A:41:FE:4A:BE:EC:A8:02:D2:9D:55:5F:55:6C:F9:F0:B9:DA:81:9E:8D:B1:5E:AD"]
+  }
+}]

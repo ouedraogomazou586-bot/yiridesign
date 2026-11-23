@@ -1,5 +1,5 @@
-const V="yiri-v377",LIB="yiri-lib";
-const FILES=["./","index.html","i18n.js","ui-img.js","manifest.webmanifest","ic192.png","ic512.png"];
+const V="yiri-v382",LIB="yiri-lib";
+const FILES=["./","index.html","ui-img.js","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));
  // modèle de détourage (4,5 Mo) : téléchargé une seule fois en arrière-plan, conservé entre les versions

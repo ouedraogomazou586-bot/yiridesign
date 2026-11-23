@@ -935,7 +935,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=370;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=372;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3749,7 +3749,7 @@ function catScreen(k){
   screen(c[2],home);LASTCAT=k;
   var h='<div class="grid" style="margin-top:4px;grid-template-columns:repeat('+(SET.cols||2)+',1fr)">';
   ids.forEach(function(id){var s=SV[id];h+='<button class="card'+(s.off?" off":"")+'" data-id="'+id+'"><span class="i">'+s.ico+'</span><b>'+esc(s.nom)+'</b><small>'+esc(s.desc)+'</small></button>';});
-  if(k==="doc")h+='<button class="card" id="cr_card"><span class="i">📝</span><b>'+esc(TT("Correction de documents"))+'</b><small>'+esc(TT("Rapport, compte rendu, procès-verbal…"))+'</small></button>';
+  if(k==="doc")h+='<button class="card" id="cr_card"><span class="i">📝</span><b>'+esc(TT("Correction de documents"))+(crPromo()&&crAiAny()?' <span style="background:#f59e0b;color:#fff;border-radius:99px;padding:1px 7px;font-size:12px">-'+(+crPromo().pct)+' %</span>':'')+'</b><small>'+esc(TT("Rapport, compte rendu, procès-verbal…"))+'</small></button>';
   app.innerHTML=h+'</div>';
   Array.prototype.forEach.call(app.querySelectorAll(".card[data-id]"),function(b){b.onclick=function(){openSv(b.getAttribute("data-id"));};});var crc=document.getElementById("cr_card");if(crc)crc.onclick=function(){try{pfLog("service","correction");}catch(e){}crOpen();};
 }
@@ -8008,10 +8008,16 @@ function crPdf2(){var o=crOpt(),P=crFinal(),W=1240,H=1754,M=130,FN="Calibri,Carl
  return makePdfMulti(all.map(function(cc){return {c:cc,pw:595.28};}));}
 
 /* ===== v369 : correction par l'IA (grammaire, style, essai offert, mode confidentiel) ===== */
-function crAiOn(k){try{return IA.live(k);}catch(e){return false;}}
+function crAiOn(k){try{return IA.live(k)&&(k==='corr_essai'||IA.live(k+'4'));}catch(e){return false;}}
+function crWc(ch){return ch.reduce(function(a,pi){return a+((CR.P[pi].t.match(/\S+/g)||[]).length);},0);}
+function crPg(ch){return Math.max(1,Math.min(4,Math.ceil(crWc(ch)/250)));}
+function crPages(){return crChunks().reduce(function(a,ch){return a+crPg(ch);},0);}
+function crCost(k){return crChunks().reduce(function(a,ch){return a+IA.price(k+crPg(ch));},0);}
+function crPromo(){try{return window.REMOTE&&REMOTE.promo&&REMOTE.promo();}catch(e){return null;}}
+function crPromoHtml(){var p=crPromo();if(!p)return "";var f=p.fin?scnDate(new Date(p.fin+"T00:00").getTime()):"";return '<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:8px 10px;margin:0 0 8px;font-weight:700;color:#92400e">🎓 '+esc(p.titre||TT("Promo"))+' : -'+(+p.pct)+' %'+(f?' '+esc(TT("jusqu\'au"))+' '+esc(f):"")+'</div>';}
 function crAiAny(){return crAiOn("corr")||crAiOn("style");}
 /* morceaux d'environ 900 mots, coupés entre les paragraphes */
-function crChunks(maxW){maxW=maxW||900;var C=[],cur=[],w=0;CR.P.forEach(function(p,pi){var n=(p.t.match(/\S+/g)||[]).length;if(!n)return;if(w+n>maxW&&cur.length){C.push(cur);cur=[];w=0;}cur.push(pi);w+=n;});if(cur.length)C.push(cur);return C;}
+function crChunks(maxW){maxW=maxW||1000;var C=[],cur=[],w=0;CR.P.forEach(function(p,pi){var n=(p.t.match(/\S+/g)||[]).length;if(!n)return;if(w+n>maxW&&cur.length){C.push(cur);cur=[];w=0;}cur.push(pi);w+=n;});if(cur.length)C.push(cur);return C;}
 /* mode confidentiel : noms propres remplacés par [P1], [P2]… avant l'envoi */
 function crMaskMap(){var M={},n=0,prot=crProt();CR.P.forEach(function(p){var m;SPL_RX.lastIndex=0;while((m=SPL_RX.exec(p.t))){var w=m[0];if(M[w]||w.length<2)continue;var cap=w[0]!==w[0].toLowerCase(),st=m.index,k=st-1;while(k>=0&&/[ \t«"(]/.test(p.t[k]))k--;var start=k<0||/[.!?:;\n•]/.test(p.t[k]);
   if((cap&&!start&&!(w===w.toUpperCase()&&splWordOk(w)))||prot.indexOf(w.toLowerCase())>=0)M[w]="[P"+(++n)+"]";}});return M;}
@@ -8033,16 +8039,19 @@ function crAiRun(kind){pfLog("cr_ia",kind);var P=crPayloads(kind,kind==="corr_es
   if(er)toast(TT("Une partie n'a pas pu être corrigée : ses crédits ont été rendus."));
   if(kind==="corr_essai")CR.trialDone=1;try{localStorage.setItem("yiri_cr_essai","1");}catch(e){}
   toast(n?n+" "+TT(n>1?"corrections ajoutées par l'IA":"correction ajoutée par l'IA"):TT("L'IA n'a trouvé aucune autre faute."));CR.s=2;CR.tab=kind==="style"?"style":"gram";if(!CR.items.some(function(x){return x.type===CR.tab;}))CR.tab="orth";CR.cur=-1;crScreen();};
- if(P.length===1)IA.call(kind,P[0],function(er,r){done(er,r?[r]:[]);});else IA.callMulti(kind,P,done);}
+ if(kind==="corr_essai"){IA.call(kind,P[0],function(er,r){done(er,r?[r]:[]);});return;}
+ var L=P.map(function(pl,i){return {kind:kind+crPg(CR.chunks[i]),payload:pl};}),pg=CR.chunks.reduce(function(a,ch){return a+crPg(ch);},0);
+ IA.callList(L,esc(TT(kind==="corr"?"Correction du document :":"Amélioration du style :"))+' <b>'+pg+' '+esc(TT(pg>1?"pages":"page"))+'</b>'+(crPromo()?' · 🎓 -'+(+crPromo().pct)+' %':''),done);}
 function crAiHtml(){if(!crAiAny())return '<div class="hint" style="margin:8px 0 0">💎 '+esc(TT("La correction de la grammaire et du style par l'IA arrive bientôt."))+'</div>';
- var n=crChunks().length,o=crOpt(),h='<div style="background:#f0fdfa;border:1.5px solid var(--ac);border-radius:12px;padding:10px 12px;margin:12px 0 0"><b>✨ '+esc(TT("Correction par l'IA"))+'</b><div class="hint" style="margin:2px 0 8px">'+esc(TT("Grammaire, accords, conjugaison et style. Tu valides chaque correction."))+'</div>';
- if(crAiOn("corr"))h+='<button class="btn full" id="cr_ai">✨ '+esc(TT("Corriger la grammaire"))+' ('+(IA.price("corr")*n)+' '+esc(TT(IA.price("corr")*n>1?"crédits":"crédit"))+')</button>';
- if(crAiOn("style"))h+='<button class="btn sec full" id="cr_st" style="margin-top:8px">👔 '+esc(TT("Améliorer le style"))+' ('+(IA.price("style")*n)+' '+esc(TT(IA.price("style")*n>1?"crédits":"crédit"))+')</button>';
+ var n=crChunks().length,pg=crPages(),o=crOpt(),h='<div style="background:#f0fdfa;border:1.5px solid var(--ac);border-radius:12px;padding:10px 12px;margin:12px 0 0"><b>✨ '+esc(TT("Correction par l'IA"))+'</b><div class="hint" style="margin:2px 0 8px">'+esc(TT("Grammaire, accords, conjugaison et style. Tu valides chaque correction."))+'</div>'+crPromoHtml();
+ if(crAiOn("corr"))h+='<button class="btn full" id="cr_ai">✨ '+esc(TT("Corriger la grammaire"))+' ('+pg+' '+esc(TT(pg>1?"pages":"page"))+' · '+crCostTxt("corr",pg)+')</button>';
+ if(crAiOn("style"))h+='<button class="btn sec full" id="cr_st" style="margin-top:8px">👔 '+esc(TT("Améliorer le style"))+' ('+pg+' '+esc(TT(pg>1?"pages":"page"))+' · '+crCostTxt("style",pg)+')</button>';
  var trial=false;try{trial=IA.live("corr_essai")&&localStorage.getItem("yiri_cr_essai")!=="1";}catch(e){}
  if(trial)h+='<button class="btn sec full" id="cr_tr" style="margin-top:8px;color:#b45309;border-color:#f59e0b">🎁 '+esc(TT("Essayer gratuitement sur le 1er paragraphe"))+'</button>';
  h+='<label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0 0;font-weight:600"><input type="checkbox" id="cr_conf"'+(o.conf?' checked':'')+' style="width:22px;height:22px;flex:none"><span>🔒 '+esc(TT("Mode confidentiel"))+'<span class="hint" style="display:block;margin:2px 0 0;font-weight:400">'+esc(TT("Les noms des personnes sont cachés avant l'envoi, puis remis à leur place."))+'</span></span></label>';
- h+='<div class="hint" style="margin:8px 0 0">'+esc(TT("Le texte est envoyé à Google (Gemini) pour être corrigé. Il n'est pas gardé par YiriDesign."))+(n>1?' · '+n+' '+esc(TT("parties")):'')+'</div></div>';
+ h+='<div class="hint" style="margin:8px 0 0">'+esc(TT("Le texte est envoyé à Google (Gemini) pour être corrigé. Il n'est pas gardé par YiriDesign."))+' · '+esc(TT("Prix à la page : 1 page = 250 mots."))+'</div></div>';
  return h;}
+function crCostTxt(k,pg){var c=crCost(k),n=IA.price(k)*pg;return (crPromo()&&n>c?'<s style="opacity:.6">'+n+'</s> ':'')+c+' '+esc(TT(c>1?"crédits":"crédit"));}
 function crAiBind(){function g(i){return document.getElementById(i);}
  if(g("cr_ai"))g("cr_ai").onclick=function(){crAiRun("corr");};
  if(g("cr_st"))g("cr_st").onclick=function(){crAiRun("style");};
@@ -10108,7 +10117,7 @@ var IA=(function(){
   function stat(cb){rpc("ia_statut",{p_device:did()},function(e,v){if(!e&&v&&typeof v.solde==="number"){bal=v.solde;cb(v);}else solde(function(x){cb(x==null?null:{solde:x,abo:null});});});}
   function fdate(x){try{return new Date(x).toLocaleDateString((window.I18N&&I18N.lang)||"fr");}catch(e){return "";}}
   function offres(){return (d&&d.v&&d.v.offres)||null;}
-  var PKN={logo:["logo","logos"],voix:["voix off","voix off"],fond:["décor d'affiche","décors d'affiche"],text:["texte","textes"],doc:["lecture de liste","lectures de liste"],retouche:["retouche","retouches"],ocr:["lecture","lectures"]};
+  var PKN={corr:["page corrigée","pages corrigées"],logo:["logo","logos"],voix:["voix off","voix off"],fond:["décor d'affiche","décors d'affiche"],text:["texte","textes"],doc:["lecture de liste","lectures de liste"],retouche:["retouche","retouches"],ocr:["lecture","lectures"]};
   function pkCan(c,svc){function n(k){var p=price(k);if(!(p>0))return "";var q=Math.floor(c/p);return q+" "+TT(PKN[k][q>1?1:0]);}
     if(svc){var t=n(svc);return t?TT("De quoi faire :")+" "+t+" · "+TT("valable aussi pour les autres services IA"):"";}
     var L=["logo","voix","fond","text"].map(n).filter(Boolean);return L.length?TT("Par exemple :")+" "+L.join(" · "):"";}
@@ -10183,6 +10192,20 @@ var IA=(function(){
     fetch(BASE+"/functions/v1/"+(SET.iaFn||"swift-processor"),{method:"POST",headers:{"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+KEY},body:JSON.stringify({device:did(),kind:kind,payload:payload}),signal:ac?ac.signal:undefined})
     .then(function(r){return r.json().catch(function(){return {ok:false,error:"x"};});}).then(function(j){clearTimeout(tm);if(j&&j.ok){if(typeof j.solde==="number")bal=j.solde;cb(null,j);}else cb(msg(j&&j.error),null);})
     .catch(function(){clearTimeout(tm);cb(msg("reseau"),null);});}
+  function callList(L,title,cb){
+    if(!L.length)return;if(L.some(function(x){return !live(x.kind);})){toast("Ce service IA n'est pas disponible pour le moment.");return;}
+    if(!navigator.onLine){toast("L'IA demande une connexion internet.");return;}
+    var n=L.length,cost=L.reduce(function(a,x){return a+price(x.kind);},0);
+    var o=modal('<h2 style="margin-top:0">✨ Intelligence artificielle</h2><div>'+title+' · <b>'+cost+'</b> '+esc(TT(cost>1?"crédits au total":"crédit"))+'.</div><div class="hint" id="ia_b">Vérification de ton solde…</div><div id="ia_es"></div><div id="ia_rd" style="display:none">'+CODEHTML+'</div><div class="row" style="margin-top:10px"><button class="btn sec" id="ia_no">Annuler</button><button class="btn" id="ia_ok" disabled>Confirmer</button></div>');
+    o.querySelector("#ia_no").onclick=function(){o.remove();};
+    function upd(v){var b=o.querySelector("#ia_b"),ok=o.querySelector("#ia_ok");if(v==null){b.textContent="Solde indisponible : vérifie ta connexion.";return;}
+      b.innerHTML='Ton solde : <b>'+v+'</b> crédit(s).';if(v>=cost){ok.disabled=false;o.querySelector("#ia_rd").style.display="none";}else{b.innerHTML+=' Il t\'en faut plus.';o.querySelector("#ia_rd").style.display="block";redeemUI(o,upd);essaiUI(o,upd,"Tu peux maintenant confirmer.");}}
+    stat(function(v){if(v&&v.abo){o.querySelector("#ia_b").innerHTML="Inclus dans ton abonnement Premium.";o.querySelector("#ia_ok").disabled=false;o.querySelector("#ia_rd").style.display="none";}else upd(v?v.solde:null);});
+    o.querySelector("#ia_ok").onclick=function(){this.disabled=true;var res=[],i=0;
+      function next(){if(i>=n){o.remove();cb(null,res);return;}
+        o.querySelector("#ia_b").textContent=TT("Partie en cours :")+" "+(i+1)+"/"+n+" … (jusqu'à une minute)";
+        exec(L[i].kind,L[i].payload,function(e,j){if(e){o.remove();cb(e,res);return;}res.push(j);i++;next();});}
+      next();};}
   function callMulti(kind,payloads,cb){
     if(!live(kind)){toast("Ce service IA n'est pas disponible pour le moment.");return;}
     if(!navigator.onLine){toast(String(kind).indexOf("app_")===0?"Ce service payant demande une connexion internet.":"L'IA demande une connexion internet.");return;}
@@ -10199,7 +10222,7 @@ var IA=(function(){
         exec(kind,payloads[i],function(e,j){if(e){o.remove();cb(e,res);return;}res.push(j);i++;next();});}
       next();};}
   window.addEventListener("online",function(){setTimeout(load,1500);});setTimeout(load,3500);
-  return {live:live,load:load,call:call,callMulti:callMulti,sample:sample,sampleList:sampleList,wallet:wallet,price:price,offres:offres,modal:modal};
+  return {live:live,load:load,call:call,callMulti:callMulti,callList:callList,sample:sample,sampleList:sampleList,wallet:wallet,price:price,offres:offres,modal:modal};
 })();
 function iaShrink(im,max,cb){var r=Math.min(1,max/Math.max(im.width,im.height)),c=mk(Math.round(im.width*r),Math.round(im.height*r)),x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/jpeg",0.88).split(",")[1];}
 function iaLoadImg(b64,mime,cb){var im=new Image();im.onload=function(){cb(im);};im.onerror=function(){cb(null);};im.src="data:"+mime+";base64,"+b64;}
@@ -11559,8 +11582,8 @@ var LOG=(function(){
 LOG.init();
 /* réglages à distance (v140) : interrupteurs et message aux utilisateurs, lus depuis Supabase ; copie gardée pour le hors ligne */
 var REMOTE=(function(){
-  var KEY="ac_remote",DK="ac_rmsg",U="https://segdgrecoreoqvrqwavj.supabase.co/rest/v1/rpc/public_config",K="sb_publishable_D7vXRASIe4twImyViuzW-A_d3JCvRl8",C={f:{},m:null},busy=false;
-  try{var o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&typeof o==="object"){C.f=o.f||{};C.m=o.m||null;}}catch(e){}
+  var KEY="ac_remote",DK="ac_rmsg",U="https://segdgrecoreoqvrqwavj.supabase.co/rest/v1/rpc/public_config",K="sb_publishable_D7vXRASIe4twImyViuzW-A_d3JCvRl8",C={f:{},m:null,p:null},busy=false;
+  try{var o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&typeof o==="object"){C.f=o.f||{};C.m=o.m||null;C.p=o.p||null;}}catch(e){}
   function on(n){return C.f[n]!==false;}
   function dismissed(){try{return localStorage.getItem(DK)||"";}catch(e){return "";}}
   function html(){var m=C.m;if(!m||!m.actif||!m.texte||String(m.id||"")===dismissed())return "";
@@ -11568,13 +11591,14 @@ var REMOTE=(function(){
   function refresh(){
     if(busy||!navigator.onLine)return;busy=true;
     fetch(U,{method:"POST",headers:{"Content-Type":"application/json","apikey":K},body:"{}"}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(j){
-      if(j&&typeof j==="object"){C.f=(j.flags&&typeof j.flags==="object")?j.flags:{};C.m=(j.message&&typeof j.message==="object")?j.message:null;try{localStorage.setItem(KEY,JSON.stringify({f:C.f,m:C.m}));}catch(e){}
+      if(j&&typeof j==="object"){C.f=(j.flags&&typeof j.flags==="object")?j.flags:{};C.m=(j.message&&typeof j.message==="object")?j.message:null;C.p=(j.promo&&typeof j.promo==="object")?j.promo:null;try{localStorage.setItem(KEY,JSON.stringify({f:C.f,m:C.m,p:C.p}));}catch(e){}
         var h=document.getElementById("rmsg");if(!h&&document.getElementById("pubst")&&!document.querySelector(".ovl")){try{home();}catch(e){}}}
       busy=false;}).catch(function(){busy=false;});
   }
   document.addEventListener("click",function(e){var b=e.target&&e.target.closest?e.target.closest("#rmx"):null;if(!b)return;try{localStorage.setItem(DK,String((C.m&&C.m.id)||""));}catch(x){}var n=document.getElementById("rmsg");if(n)n.remove();});
   setTimeout(refresh,2500);window.addEventListener("online",function(){setTimeout(refresh,1500);});document.addEventListener("visibilitychange",function(){if(!document.hidden)setTimeout(refresh,500);});
-  return {on:on,html:html,refresh:refresh,get:function(){return C;}};
+  function promo(){var p=C.p,t=new Date(),d=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");if(!p||!p.actif||!(+p.pct>0))return null;if(p.fin&&d>p.fin)return null;if(p.debut&&d<p.debut)return null;return p;}
+  return {on:on,html:html,refresh:refresh,promo:promo,get:function(){return C;}};
 })();
 /* chiffres publics (v102) : nombre d'utilisateurs et de téléchargements, affichés seulement à partir d'un seuil */
 var PUBS=(function(){

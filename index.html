@@ -935,7 +935,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=372;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=377;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3697,7 +3697,6 @@ function home(){try{app.classList.remove("stw","noprev","stepsmode","scn","setp"
   h+=ntfInvite();h+='<button class="mi" id="qk_open" style="width:100%;margin:0 0 12px;border:2px solid var(--ac)"><span class="i">✨</span><div><b>'+esc(TT("Affiche en 1 geste"))+'</b><small>'+esc(TT("Ajoute tes photos : l'application crée l'affiche"))+'</small></div><span class="ar">›</span></button>';
   h+='<div class="gt">Que veux-tu créer ?</div>'+menuHtml(items);
   h+='<button class="btn sec full" id="invite" style="margin-top:10px;padding:10px">📤 Inviter un ami à essayer YiriDesign</button>';
-  h+='<div id="pubst" class="hint" style="text-align:center;margin:8px 0 0"></div>';
   app.innerHTML=h;banInit();var iv=document.getElementById("invite");if(iv)iv.onclick=inviteFriend;if(window.PUBS)PUBS.show();
   menuBind(function(k){catScreen(k);});var qko=document.getElementById("qk_open");if(qko)qko.onclick=qkOpen;ntfInviteBind();
   var cg=document.getElementById("chg");if(cg)cg.onclick=identity;
@@ -8058,6 +8057,10 @@ function crAiBind(){function g(i){return document.getElementById(i);}
  if(g("cr_tr"))g("cr_tr").onclick=function(){crAiRun("corr_essai");};
  if(g("cr_conf"))g("cr_conf").onchange=function(){crOpt().conf=this.checked;};}
 
+/* v377 : mode développeur réservé aux appareils marqués « administrateur » dans l'app admin */
+function devCheck(cb){if(!navigator.onLine){cb(false);return;}var id="";try{id=localStorage.getItem("ac_did")||"";}catch(e){}if(!id){cb(false);return;}
+ fetch("https://segdgrecoreoqvrqwavj.supabase.co/rest/v1/rpc/is_dev_device",{method:"POST",headers:{"Content-Type":"application/json","apikey":"sb_publishable_D7vXRASIe4twImyViuzW-A_d3JCvRl8"},body:JSON.stringify({p_id:id})}).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(v){cb(v===true);}).catch(function(){cb(null);});}
+setTimeout(function(){try{if(SET.dev)devCheck(function(ok){if(ok===false){SET.dev=false;saveSet();}});}catch(e){}},6000);
 function scnDate(t){var m={fr:"fr-FR",en:"en-GB",ar:"ar",es:"es-ES",pt:"pt-PT",de:"de-DE",zh:"zh-CN"},l="fr";try{l=(window.I18N&&I18N.cur&&I18N.cur())||"fr";}catch(e){}try{return new Date(t).toLocaleDateString(m[l]||"fr-FR");}catch(e){return new Date(t).toLocaleDateString();}}
 function scnMenu(title,items){var o=document.createElement("div");o.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:85;display:flex;align-items:flex-end";
   o.innerHTML='<div style="background:var(--bg);width:100%;border-radius:20px 20px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom))"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:21px">'+esc(TT(title))+'</b><button class="btn sec" data-x="1" style="min-height:0;padding:8px 14px">✕</button></div>'+items.map(function(t,i){return '<button data-si="'+i+'" style="display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:13px;margin-top:9px;font:inherit;color:var(--tx)"><span style="font-size:26px">'+t[0]+'</span><b style="font-size:17px">'+esc(TT(t[1]))+'</b></button>';}).join("")+'</div>';
@@ -11059,7 +11062,7 @@ var SETIDX=[
  ["Numérotation des factures","num","A","prefixe numero facture"],
  ["Colonnes de l'accueil","acc","A","affichage accueil colonnes services masquer"],
  ["Code de verrouillage","sec","A","pin mot de passe securite"],
- ["Forcer la mise à jour","mai","A","maintenance update version"],["Tester le bouton Retour","mai","A","retour test quitter maintenance"],["Réinitialiser les réglages","mai","A","maintenance reset"]
+ ["Forcer la mise à jour","mai","A","maintenance update version"],["Réinitialiser les réglages","mai","A","maintenance reset"]
 ];
 function setSearch(list){
   var h='<input type="search" id="ss_in" placeholder="🔍 Rechercher un réglage…" autocomplete="off" style="font-size:16px;padding:12px;margin-bottom:10px;width:100%;box-sizing:border-box"><div id="ss_out" class="menu" style="display:none"></div>';return h;}
@@ -11171,7 +11174,7 @@ function setPage(k,back,list){
       document.getElementById("a_pinset").onclick=function(){var v=document.getElementById("a_pin").value;if(!/^[0-9]{4}$/.test(v)){toast("Le code doit avoir 4 chiffres");return;}hashPin(v,function(hh){SET.pin=hh;saveSet();document.getElementById("a_pin").value="";toast("Code enregistré");});};
       document.getElementById("a_pinoff").onclick=function(){SET.pin="";saveSet();toast("Code retiré");};};
   }else if(k==="mai"){
-    h+='<div class="note" style="margin-top:4px" id="a_info">…</div><div class="menu"><button class="btn full" id="a_upd">🔄 Forcer la mise à jour de l\'application</button><button class="btn full" id="a_rp">📨 Envoyer un rapport</button><button class="btn sec full" id="a_log">📒 Journal d\'activité</button><button class="btn sec full" id="a_bt">🧪 Tester le bouton Retour</button><div class="hint">Montre si ton téléphone envoie bien le signal « Retour » à l\'application (aide à comprendre pourquoi « Quitter l\'application ? » ne s\'affiche pas).</div><div class="hint">À utiliser si la nouvelle version de l\'application n\'apparaît pas. Tes données ne sont pas effacées.</div><button class="btn sec full" id="a_rs">↩ Réinitialiser les réglages (garder mes fiches et brouillons)</button></div>';
+    h+='<div class="note" style="margin-top:4px" id="a_info">…</div><div class="menu"><button class="btn full" id="a_upd">🔄 Forcer la mise à jour de l\'application</button><button class="btn full" id="a_rp">📨 Envoyer un rapport</button><button class="btn sec full" id="a_log">📒 Journal d\'activité</button>'+(SET.dev?'<button class="btn sec full" id="a_bt">🧪 Tester le bouton Retour</button><div class="hint">Montre si ton téléphone envoie bien le signal « Retour » à l\'application (aide à comprendre pourquoi « Quitter l\'application ? » ne s\'affiche pas).</div>':'')+'<div class="hint">À utiliser si la nouvelle version de l\'application n\'apparaît pas. Tes données ne sont pas effacées.</div><button class="btn sec full" id="a_rs">↩ Réinitialiser les réglages (garder mes fiches et brouillons)</button></div>';
     bind=bindMaint;
   }
   app.innerHTML=h+'</div>';bind();
@@ -11191,11 +11194,11 @@ function backTest(){
   document.getElementById("bt_x").onclick=function(){window.__bt=null;o.remove();};
 }
 function bindMaint(){
-  document.getElementById("a_bt").onclick=backTest;
+  if(document.getElementById("a_bt"))document.getElementById("a_bt").onclick=backTest;
   document.getElementById("a_rp").onclick=function(){LOG.sendReport();};document.getElementById("a_log").onclick=function(){LOG.screen();};document.getElementById("a_rs").onclick=function(){if(!confirm("Réinitialiser les réglages ? Tes fiches, logos et brouillons restent."))return;try{localStorage.removeItem("ac_set");}catch(e){}location.reload();};
   document.getElementById("a_upd").onclick=function(){toast("Mise à jour en cours…");var jobs=[];try{if(navigator.serviceWorker)jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));if(window.caches)jobs.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));}));}catch(e){}Promise.all(jobs).then(function(){setTimeout(function(){location.reload();},400);}).catch(function(){location.reload();});};
   var tot=0;try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);tot+=(k.length+(localStorage.getItem(k)||"").length)*2;}}catch(e){}
-  var mm=vidMime();var inf='Version <b>'+VER+'</b><br>Données enregistrées : <b>'+Math.round(tot/1024)+' Ko</b> sur environ 5 000 Ko disponibles<br>Fiches : <b>'+BRS.length+'</b><br>Format vidéo du téléphone : <b>'+(mm?(mm.indexOf("mp4")>=0?"MP4":"WebM"):"non pris en charge")+'</b><br>Partage de fichiers : <b>'+(navigator.canShare?"disponible":"non disponible")+'</b><br>Écran allumé pendant la vidéo : <b>'+(navigator.wakeLock?"disponible":"non disponible")+'</b><br>Hors connexion : <b>'+((navigator.serviceWorker&&location.protocol.indexOf("http")===0)?"actif":"inactif")+'</b>';
+  var mm=vidMime();var inf='Version <b>'+VER+'</b><br>Données enregistrées : <b>'+Math.round(tot/1024)+' Ko</b> sur environ 5 000 Ko disponibles<br>Fiches : <b>'+BRS.length+'</b>'+(SET.dev?'<br>Format vidéo du téléphone : <b>'+(mm?(mm.indexOf("mp4")>=0?"MP4":"WebM"):"non pris en charge")+'</b><br>Partage de fichiers : <b>'+(navigator.canShare?"disponible":"non disponible")+'</b><br>Écran allumé pendant la vidéo : <b>'+(navigator.wakeLock?"disponible":"non disponible")+'</b><br>Hors connexion : <b>'+((navigator.serviceWorker&&location.protocol.indexOf("http")===0)?"actif":"inactif")+'</b>':'');
   var e=document.getElementById("a_info");if(e)e.innerHTML=inf;
 }
 function bindData(){
@@ -11563,19 +11566,21 @@ var LOG=(function(){
   function screenLog(){
     screen("Journal d'activité",function(){setPage("mai",settings,SETM);});
     var cnt={};L.forEach(function(x){cnt[x.e]=(cnt[x.e]||0)+1;});
-    var h='<div class="pg"><div class="note" style="margin-top:4px">'+(on()?'✅ Journal <b>activé</b>':'⛔ Journal <b>désactivé</b>')+' · '+L.length+' événements · appareil <b>'+did()+'</b><br>Le journal détaillé est <b>facultatif</b> : activé, il est envoyé à l\'équipe YiriDesign (numéro d\'appareil aléatoire, sans ton nom). Aucun texte, photo ni prix n\'est enregistré.<br>Dans tous les cas (même journal désactivé), un signal anonyme est envoyé chaque jour pour compter les utilisateurs : numéro d\'appareil aléatoire et version, rien d\'autre.</div>'
-     +'<div class="menu"><button class="btn sec full" id="lg_se">🧪 Tester Sentry (envoyer une erreur test)</button><button class="btn full" id="lg_st">'+(st()?'📊 Statistiques anonymes : activées (toucher pour couper)':'📊 Statistiques anonymes : coupées (toucher pour activer)')+'</button><button class="btn full" id="lg_tg">'+(on()?'Désactiver le journal':'Activer le journal')+'</button><button class="btn full" id="lg_rp">📨 Envoyer un rapport</button><button class="btn sec full" id="lg_js">📤 Exporter (JSON)</button><button class="btn sec full" id="lg_cs">📤 Exporter (CSV)</button><button class="btn sec full" id="lg_cl">🗑️ Effacer le journal</button></div>'
-     +'<label>Résumé</label><div class="hint">'+(Object.keys(cnt).map(function(k){return k+" : "+cnt[k];}).join(" · ")||"vide")+'</div><label>Derniers événements</label><div style="font:12px/1.5 monospace;word-break:break-all">';
-    L.slice(-60).reverse().forEach(function(x){h+=fmt(x.t)+" · <b>"+x.e+"</b> "+String(x.d).replace(/</g,"&lt;")+"<br>";});
-    app.innerHTML=h+'</div></div>';
-    document.getElementById("lg_tg").onclick=function(){SET.logOn=!on();saveSet();if(on()){add("consentement","oui");setTimeout(sync,800);}screenLog();};
+    var h='<div class="pg">'+(SET.dev?'<div class="note" style="margin-top:4px">'+(on()?'✅ Journal <b>activé</b>':'⛔ Journal <b>désactivé</b>')+' · '+L.length+' événements · appareil <b>'+did()+'</b></div>':'')
+     +'<div class="menu">'+(SET.dev?'<button class="btn sec full" id="lg_se">🧪 Tester Sentry (envoyer une erreur test)</button>':'')+'<button class="btn full" id="lg_st">'+(st()?'📊 Statistiques anonymes : activées (toucher pour couper)':'📊 Statistiques anonymes : coupées (toucher pour activer)')+'</button><button class="btn full" id="lg_rp">📨 Envoyer un rapport</button>'+(SET.dev?'<button class="btn full" id="lg_tg">'+(on()?'Désactiver le journal':'Activer le journal')+'</button><button class="btn sec full" id="lg_js">📤 Exporter (JSON)</button><button class="btn sec full" id="lg_cs">📤 Exporter (CSV)</button><button class="btn sec full" id="lg_cl">🗑️ Effacer le journal</button>':'')+'</div>'
+     +(!SET.dev?'':'<label>Résumé</label><div class="hint">'+(Object.keys(cnt).map(function(k){return k+" : "+cnt[k];}).join(" · ")||"vide")+'</div><label>Derniers événements</label><div style="font:12px/1.5 monospace;word-break:break-all">');
+    if(SET.dev)L.slice(-60).reverse().forEach(function(x){h+=fmt(x.t)+" · <b>"+x.e+"</b> "+String(x.d).replace(/</g,"&lt;")+"<br>";});
+    app.innerHTML=h+(SET.dev?'</div>':'')+'</div>';
+    function gB(i,f){var e=document.getElementById(i);if(e)e.onclick=f;}
+    gB("lg_tg",function(){SET.logOn=!on();saveSet();if(on()){add("consentement","oui");setTimeout(sync,800);}screenLog();});
     document.getElementById("lg_st").onclick=function(){SET.statsOff=st();saveSet();screenLog();};
-    document.getElementById("lg_se").onclick=function(){if(!navigator.onLine){toast(TT("Il faut internet pour ce test."));return;}
+    var nt=document.getElementById("ttl"),tp=0,tt=null;if(nt)nt.onclick=function(){if(!document.getElementById("lg_st"))return;tp++;clearTimeout(tt);tt=setTimeout(function(){tp=0;},1500);if(tp>=5){tp=0;if(SET.dev){SET.dev=false;saveSet();toast("Mode développeur désactivé");screenLog();return;}devCheck(function(ok){if(!ok)return;SET.dev=true;saveSet();toast("Mode développeur activé");screenLog();});}};
+    var lse=document.getElementById("lg_se");if(lse)lse.onclick=function(){if(!navigator.onLine){toast(TT("Il faut internet pour ce test."));return;}
       if(window.Sentry&&Sentry.captureMessage){try{Sentry.captureMessage("Test YiriDesign v"+VER,"error");toast(TT("Erreur test envoyée : regarde dans Sentry, onglet Issues, dans 1 minute."));}catch(e){toast("Sentry : "+e.message);}}
       else toast(TT("Sentry n'est pas encore chargé : attends 10 secondes avec internet, puis réessaie."));};
-    document.getElementById("lg_rp").onclick=function(){sendReport();};document.getElementById("lg_js").onclick=function(){dl(new Blob([json()],{type:"application/json"}),"journal_yiridesign.json");};
-    document.getElementById("lg_cs").onclick=function(){dl(new Blob(["﻿"+csv()],{type:"text/csv"}),"journal_yiridesign.csv");};
-    document.getElementById("lg_cl").onclick=function(){if(!confirm("Effacer tout le journal ?"))return;L=[];try{localStorage.removeItem(KEY);}catch(e){}screenLog();};
+    document.getElementById("lg_rp").onclick=function(){sendReport();};gB("lg_js",function(){dl(new Blob([json()],{type:"application/json"}),"journal_yiridesign.json");});
+    gB("lg_cs",function(){dl(new Blob(["﻿"+csv()],{type:"text/csv"}),"journal_yiridesign.csv");});
+    gB("lg_cl",function(){if(!confirm("Effacer tout le journal ?"))return;L=[];try{localStorage.removeItem(KEY);}catch(e){}screenLog();});
   }
   return {init:init,add:add,sync:sync,ask:ask,screen:screenLog,sendReport:sendReport,csv:csv,json:json,get:function(){return L;}};
 })();
@@ -11608,7 +11613,6 @@ var PUBS=(function(){
   function show(){
     var el=document.getElementById("pubst");if(!el)return;var o=get(),a=[];
     if(o.u>=MIN)a.push("👥 "+fmt(o.u)+" utilisateurs");
-    if(o.d>=MIN)a.push("⬇ "+fmt(o.d)+" téléchargements");
     el.textContent=a.join("  ·  ");
   }
   function refresh(){

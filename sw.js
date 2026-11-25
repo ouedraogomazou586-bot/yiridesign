@@ -1,9 +1,9 @@
-const V="yiri-v382",LIB="yiri-lib";
+const V="yiri-v392",LIB="yiri-lib";
 const FILES=["./","index.html","ui-img.js","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));
- // modèle de détourage (4,5 Mo) : téléchargé une seule fois en arrière-plan, conservé entre les versions
- e.waitUntil(caches.open(LIB).then(c=>c.match("u2netp_256.bin").then(m=>m||c.add("u2netp_256.bin"))).catch(()=>{}));});
+ // v391 : le modèle de détourage (4,5 Mo) n'est plus téléchargé d'office ; il l'est au premier détourage, puis gardé
+});
 // le cache « yiri-lib » (bibliothèque d'images, modèle de détourage) n'est jamais effacé par une mise à jour
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!==LIB&&x!=="yiri-share").map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
 function fromCache(req){return caches.open(V).then(c=>c.match(req,{ignoreSearch:true}).then(m=>m||(req.mode==="navigate"?c.match("index.html").then(i=>i||c.match("./")):null)));}

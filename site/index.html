@@ -3,6 +3,7 @@
 <title>YiriDesign : crée tes affiches, cartes et certificats</title>
 <meta name="description" content="YiriDesign : application gratuite pour créer affiches, faire-parts, cartes de visite, menus, certificats, logos et factures. Fonctionne sans internet.">
 <meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/ic192.png">
 <style>
 :root{--bg:#f6f5f2;--card:#fff;--tx:#14201f;--mut:#5b6b69;--ac:#0f766e;--ac2:#f59e0b;--bd:#e3e1db}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1716;--card:#16221f;--tx:#eef4f2;--mut:#9db1ad;--bd:#25332f}}
@@ -43,7 +44,7 @@ footer{border-top:1px solid var(--bd);padding:24px 0 40px;color:var(--mut);font-
 <h1>Crée de belles affiches, cartes et certificats, directement sur ton téléphone</h1>
 <p class="lead">Affiches publicitaires, faire-parts, menus, cartes de visite, badges, certificats, logos et factures. Tout fonctionne <b>sans internet</b>, une fois l'application installée.</p>
 <div class="cta">
-<a class="btn main" id="inst" href="#">⬇ Installer l'application</a>
+<a class="btn main" id="inst" href="#">📲 Installer sur l'écran d'accueil</a>
 <a class="btn ghost" id="apk" href="#" style="display:none">📦 Télécharger l'APK</a>
 <a class="btn ghost" id="open" href="#">Ouvrir dans le navigateur</a>
 <span class="soon">▶ Bientôt sur Google Play</span>
@@ -98,12 +99,20 @@ var url=APP_URL||(location.origin+"/yiridesign/");
 var a=document.getElementById("open");a.href=url;
 var dp=null,inst=document.getElementById("inst");
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;});
+/* le site partage l'application : Chrome peut proposer l'installation directement ici */
+if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(function(){});
+/* le bouton reste toujours visible sur le site */
+function done(){try{return localStorage.getItem("yiri_inst")==="1";}catch(e){return false;}}
+function hideInst(){inst.textContent="✅ Application installée";}
+
+window.addEventListener("beforeinstallprompt",function(){try{localStorage.removeItem("yiri_inst");}catch(e){}inst.style.display="";});
+window.addEventListener("appinstalled",function(){try{localStorage.setItem("yiri_inst","1");}catch(e){}hideInst();});
 var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
 if(ios)document.getElementById("ios").style.display="block";
 inst.onclick=function(ev){ev.preventDefault();
- if(dp){dp.prompt();dp.userChoice.finally(function(){dp=null;});return;}
+ if(dp){dp.prompt();dp.userChoice.then(function(c){if(c&&c.outcome==="accepted"){try{localStorage.setItem("yiri_inst","1");}catch(e){}hideInst();}}).finally(function(){dp=null;});return;}
  if(ios){document.getElementById("ios").scrollIntoView({behavior:"smooth",block:"center"});return;}
- window.location.href=url;};
+ window.location.href=url+(url.indexOf("?")<0?"?":"&")+"install=1";};
 
 /* APK : lu automatiquement dans la dernière « release » du dépôt GitHub de l'application. */
 var GH_OWNER="ouedraogomazou586-bot";

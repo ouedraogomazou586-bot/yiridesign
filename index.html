@@ -935,7 +935,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=396;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=397;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -8761,7 +8761,9 @@ function sgFonts(cb){if(SGFOK===2){cb();return;}var done=false,n=0,K=Object.keys
  setTimeout(fin,5000);if(!window.FontFace||!document.fonts){fin();return;}
  K.forEach(function(k){var f=SGF[k];try{var ff=new FontFace(f[0],"url(assets/fonts/"+f[2]+".woff)",{weight:String(f[1])});ff.load().then(function(x){document.fonts.add(x);SGFL[k]=1;if(++n===K.length)fin();}).catch(function(){if(++n===K.length)fin();});}catch(e){if(++n===K.length)fin();}});}
 function sgFam(k){var f=SGF[k];return f?'"'+f[0]+'",'+(k==="gv"?'"SG Italiana",Georgia,serif':/^(it|is|gl|ys|lo|loB)$/.test(k)?"Georgia,serif":"Arial,sans-serif"):"Arial,sans-serif";}
-function sgFont(k,s,it){var f=SGF[k]||[0,400];return (it?"italic ":"")+f[1]+" "+Math.max(1,Math.round(s))+"px "+sgFam(k);}
+/* v397 : option « 2 polices seulement » — le titre garde sa police, tout le reste passe en police simple */
+var SGP2=(function(){try{return localStorage.getItem("yiri_p2")==="1";}catch(e){return false;}})(),SGP2M=null,SGREC=null;
+function sgFont(k,s,it){if(SGREC){if(!(SGREC[k]>=s))SGREC[k]=s;}if(SGP2M){if(SGP2M[k])k=SGP2M[k];else if(SGP2M._t===k&&SGP2M._d&&s<SGP2M._m*0.5)k="ou";}var f=SGF[k]||[0,400];return (it?"italic ":"")+f[1]+" "+Math.max(1,Math.round(s))+"px "+sgFam(k);}
 /* ---------- couleurs ---------- */
 function sgHex(c){return c;}
 function sgRGB(h){h=h.replace("#","");return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
@@ -9187,7 +9189,10 @@ function sgProgPoster(x,W,H,d,pal,type,ti,v){var u=W/1080,S=sgStyle(type,ti,v,pa
  if(d.lieu)sgT(x,"📍 "+d.lieu,W/2,H-(d.de?120:80)*u,{f:"ou",s:36*u,c:S.ink,a:"center",mw:W-160*u});
  if(d.de)sgT(x,d.de,W/2,H-66*u,{f:"is",s:34*u,c:S.ink,a:"center",it:true,mw:W-160*u});}
 function sgDraw(type,ti,v,d,fmt,scale){var F=SGFMT[fmt]||SGFMT.statut,W=Math.round(F[0]*(scale||1)),H=Math.round(F[1]*(scale||1)),c=mk(W,H),x=c.getContext("2d"),T=SGT[type][ti];
- var pal=sgPal((d.P[0]&&d.P[0].im)||null,v);SGK=d._k||1;try{if(d._prog)sgProgPoster(x,W,H,d,pal,type,ti,v);else T[1](x,W,H,d,pal,v);}catch(e){try{console.error(e);}catch(z){}}SGK=1;return c;}
+ var pal=sgPal((d.P[0]&&d.P[0].im)||null,v);SGK=d._k||1;SGP2M=null;
+ if(SGP2&&!d._prog){SGREC={};try{T[1](mk(W,H).getContext("2d"),W,H,d,pal,v);}catch(e){}var RC=SGREC,tk=null,mx=0,k;SGREC=null;for(k in RC)if(RC[k]>mx){mx=RC[k];tk=k;}
+  var tf=tk&&SGF[tk]?SGF[tk][0]:"";SGP2M={_t:tk,_m:mx,_d:/^(gv|nd|po|bo|bs|te|it)$/.test(tk||"")};Object.keys(SGF).forEach(function(q){if(SGF[q][0]===tf||q==="ou"||q==="ouB")return;SGP2M[q]=SGF[q][1]>=700?"ouB":"ou";});}
+ try{if(d._prog)sgProgPoster(x,W,H,d,pal,type,ti,v);else T[1](x,W,H,d,pal,v);}catch(e){try{console.error(e);}catch(z){}}SGK=1;SGP2M=null;return c;}
 /* ======================= v382 : parcours rapide (type → photos + textes → 6 propositions → 3 formats) ======================= */
 var SGTY=[["promo","🛍️","Promo / produits","Tes produits et leurs prix",12],["resto","🍲","Restaurant / menu","Tes plats et leurs prix",30],["mariage","💍","Mariage","La photo des mariés",2],
  ["bapteme","👶","Baptême, naissance, anniversaire","La photo de l'enfant",1],["deces","🕊️","Décès / hommage","La photo du défunt",1],["event","🎤","Soirée, concert, église","Un artiste, un orateur… (facultatif)",1]];
@@ -9298,7 +9303,7 @@ function sgDetail(v){var T=sgTy();SGS.pick=v;SGS.edit=0;pfLog("sg_choix",SGS.typ
   +(hasPh?'<div><span>'+esc(TT("Photo"))+'</span><button data-ph="up">↑</button><button data-ph="dn">↓</button><button data-ph="in">＋</button><button data-ph="out">－</button><button data-ph="0">↺</button>'
    +(SGS.type==="mariage"&&(SGS.P.some(function(p){return p.full;})||sgData().P.some(function(p){return p.tr;}))?'<button data-ph="full"'+(SGS.P.some(function(p){return p.full;})?' class="on"':'')+'>🖼️ '+esc(TT("Photo entière"))+'</button>':'')+'</div>':'')
   +'<div><span>'+esc(TT("Texte"))+'</span><button data-tk="-">A−</button><button data-tk="+">A+</button><button data-tk="0">↺</button></div>'
-  +'<button class="sg-txt" id="sg_tx">✏️ '+esc(TT("Modifier le texte"))+'</button><button class="sg-txt" id="sg_far" style="margin-top:6px">👁 '+esc(TT("Test des 3 secondes"))+'</button></div><div class="menu"><button class="btn full" id="sg_sh" style="background:#16a34a">📲 '+esc(TT("Partager (WhatsApp, Facebook…)"))+'</button>'
+  +'<button class="sg-txt" id="sg_tx">✏️ '+esc(TT("Modifier le texte"))+'</button><button class="sg-txt" id="sg_far" style="margin-top:6px">👁 '+esc(TT("Test des 3 secondes"))+'</button><button class="sg-txt'+(SGP2?' on':'')+'" id="sg_p2" style="margin-top:6px">'+(SGP2?'✅ ':'🔤 ')+esc(TT(SGP2?"2 polices seulement : activé":"2 polices seulement"))+'</button></div><div class="menu"><button class="btn full" id="sg_sh" style="background:#16a34a">📲 '+esc(TT("Partager (WhatsApp, Facebook…)"))+'</button>'
   +'<div style="display:flex;gap:8px"><button class="btn sec" id="sg_dl" style="flex:1;padding:12px 4px">⬇️ '+esc(TT("Enregistrer"))+'</button><button class="btn sec" id="sg_pdf" style="flex:1;padding:12px 4px">📄 PDF</button></div>'
   +(SGS.type==="resto"&&SGS.P.length?'<button class="btn full" id="sg_menu" style="background:#b45309">📖 '+esc(TT("Carte menu de plusieurs pages"))+'</button>':'')+(many?'<button class="btn sec full" id="sg_lot">📚 '+esc(TT("Une affiche par produit"))+' ('+SGS.P.length+')</button>':'')
   +(!pub?'<button class="btn sec full" id="sg_pack">🎉 '+esc(TT(SGS.type==="deces"?"Annonce + programme + remerciements":"Pack : annonce + programme + rappel + merci"))+'</button>':'')+'</div></div>';
@@ -9316,6 +9321,7 @@ function sgDetail(v){var T=sgTy();SGS.pick=v;SGS.edit=0;pfLog("sg_choix",SGS.typ
   full=null;try{document.getElementById("sg_img").src=sgDraw(SGS.type,v.ti,v.v,sgData(),SGS.fmt,0.6).toDataURL("image/jpeg",0.88);}catch(e){}};});
  document.getElementById("sg_tx").onclick=function(){SGS.edit=1;sgForm();};
  /* v394 : test des 3 secondes — l'affiche vue de loin, floue ; le message principal doit se lire tout de suite */
+ document.getElementById("sg_p2").onclick=function(){SGP2=!SGP2;try{localStorage.setItem("yiri_p2",SGP2?"1":"0");}catch(x){}toast(TT(SGP2?"Titre dans sa police, tout le reste en police simple et lisible.":"Option désactivée."));sgDetail(v);};
  document.getElementById("sg_far").onclick=function(){var src=document.getElementById("sg_img").src;if(!src)return;
   var o=document.createElement("div");o.style.cssText="position:fixed;inset:0;z-index:90;background:#6b7280;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:#fff;text-align:center";
   o.innerHTML='<div style="font-size:15px;margin:0 0 14px;max-width:340px">'+esc(TT("Ton affiche vue de loin, comme dans la rue. Regarde 3 secondes…"))+'</div><img src="'+src+'" style="width:34vw;max-width:170px;filter:blur(1.6px);box-shadow:0 6px 20px rgba(0,0,0,.4);border-radius:4px;transition:filter .4s"><div id="far_q" style="font-size:17px;font-weight:700;margin:18px 0 0;max-width:340px;min-height:48px"></div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn sec" id="far_c" style="background:#fff">'+esc(TT("Fermer"))+'</button></div>';

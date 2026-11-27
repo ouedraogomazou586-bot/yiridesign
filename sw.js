@@ -1,4 +1,4 @@
-const V="yiri-v394",LIB="yiri-lib";
+const V="yiri-v395",LIB="yiri-lib";
 const FILES=["./","index.html","ui-img.js","manifest.webmanifest","ic192.png","ic512.png"];
 const WAIT=2500; // si le réseau tarde plus de 2,5 s, on ouvre tout de suite la copie enregistrée
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(FILES.map(f=>c.add(f).catch(()=>{})))).then(()=>self.skipWaiting()));
@@ -15,6 +15,8 @@ self.addEventListener("fetch",e=>{if(e.request.method!=="POST"||!new URL(e.reque
   for(const x of L){await c.put("share/"+(n++),new Response(x,{headers:{"Content-Type":x.type||"image/jpeg"}}));}}catch(err){}
   return Response.redirect(new URL("./?shared="+n,self.registration.scope).href,303);})());});
 self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;
+ // v395 : le fichier APK (gros) se télécharge directement, jamais gardé en mémoire
+ if(/\.apk(\?|$)/.test(e.request.url))return;
  // détecteur de visage (MediaPipe) : téléchargé une fois avec internet, puis disponible sans internet
  if(isFace(e.request.url)){e.respondWith(caches.open(LIB).then(c=>c.match(e.request.url).then(m=>m||fetch(e.request).then(r=>{if(r&&r.ok&&r.status===200){c.put(e.request.url,r.clone());}return r;}))));return;}
  if(new URL(e.request.url).origin!==self.location.origin)return;

@@ -1,0 +1,29 @@
+# Garde en vie la clé de signature de l'APK natif.
+# GitHub efface une mémoire (cache) qui n'a pas servi pendant 7 jours.
+# Ce petit outil la relit tous les 5 jours, ainsi la clé ne change jamais
+# et les utilisateurs peuvent toujours mettre à jour l'APK sans le désinstaller.
+name: Garder la clé de l'APK
+
+on:
+  schedule:
+    - cron: "17 3 */5 * *"
+  workflow_dispatch:
+
+jobs:
+  garder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Relire la clé (même nom que dans apk_natif.yml)
+        id: cle
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: yiridesign-debug-keystore-v1
+
+      - name: Résultat
+        run: |
+          if [ "${{ steps.cle.outputs.cache-hit }}" = "true" ]; then
+            echo "✅ Clé trouvée et gardée en vie."
+          else
+            echo "⚠️ Clé absente : la prochaine fabrication de l'APK en créera une nouvelle."
+          fi

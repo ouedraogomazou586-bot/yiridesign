@@ -44,7 +44,11 @@ jobs:
           mkdir -p /tmp/natif/www
           cp index.html /tmp/natif/www/
           cp -r assets /tmp/natif/www/assets
-          for f in manifest.webmanifest ic192.png ic512.png; do [ -f "$f" ] && cp "$f" /tmp/natif/www/ || true; done
+          for f in manifest.webmanifest ic192.png ic512.png ui-img.js i18n.js i18n-en.js i18n-ar.js i18n-es.js i18n-pt.js i18n-de.js i18n-zh.js; do [ -f "$f" ] && cp "$f" /tmp/natif/www/ || true; done
+          # traductions, dictionnaire de correction, lecture PDF et détection de visage : aussi dans l'APK
+          mkdir -p /tmp/natif/www/lib /tmp/natif/www/models
+          for d in lib/spell lib/pdf.min.mjs lib/pdf.worker.min.mjs; do [ -e "$d" ] && cp -r "$d" /tmp/natif/www/lib/ || true; done
+          [ -d models/mediapipe ] && cp -r models/mediapipe /tmp/natif/www/models/ || true
           cd /tmp/natif
           cat > package.json <<'JSON'
           {"name":"yiridesign","version":"1.0.0","private":true,"dependencies":{"@capacitor/android":"^6.2.0","@capacitor/app":"^6.0.0","@capacitor/cli":"^6.2.0","@capacitor/core":"^6.2.0","@capacitor/filesystem":"^6.0.0","@capacitor/share":"^6.0.0"}}
@@ -264,7 +268,19 @@ jobs:
           ls -la YiriDesign-*.apk
           echo "Variante : $(cat /tmp/variante)"
 
-      - name: Publier l'APK (page « Releases » du dépôt)
+      - name: Mettre l'APK sur yiridesign.com (adresse yiridesign.com/yiridesign.apk)
+        run: |
+          cp "YiriDesign-${{ github.run_number }}.apk" yiridesign.apk
+          printf '{"v":"%s","date":"%s","size":%s}\n' "${{ github.run_number }}" "$(date -u +%Y-%m-%d)" "$(stat -c%s yiridesign.apk)" > apk-info.json
+          cat apk-info.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add yiridesign.apk apk-info.json
+          git commit -m "APK ${{ github.run_number }} sur le site" || echo "Rien de nouveau"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Publier l'APK (page « Releases » du dépôt, copie de secours)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}

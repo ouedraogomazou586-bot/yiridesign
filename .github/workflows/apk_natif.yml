@@ -33,11 +33,32 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Garder la même clé de signature d'une fabrication à l'autre
-        uses: actions/cache@v4
+      - name: Relire la clé de signature (toujours la même)
+        id: cle
+        uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
-          key: yiridesign-debug-keystore-v1
+          key: yiridesign-debug-keystore-v2
+
+      - name: Créer la clé une seule fois (seulement si elle n'existe pas encore)
+        if: steps.cle.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10950 -dname "CN=YiriDesign,O=YiriDesign,C=BF"
+          echo "Nouvelle clé créée."
+
+      - name: Enregistrer la clé tout de suite (une seule fois)
+        if: steps.cle.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: yiridesign-debug-keystore-v2
+
+      - name: Utiliser cette clé pour signer l'APK
+        run: |
+          echo "ANDROID_USER_HOME=$HOME/.android" >> "$GITHUB_ENV"
+          echo "Clé trouvée dans la mémoire : ${{ steps.cle.outputs.cache-hit }}"
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -E "SHA256:" || true
 
       - name: Créer le projet Android
         run: |

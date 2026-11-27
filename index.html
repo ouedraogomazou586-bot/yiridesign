@@ -935,7 +935,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=402;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=403;window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -2474,6 +2474,23 @@ function lgSheet(d,cb,o){
     cb(c);
   }
 }
+/* v403 : leçon 9 — PDF pour l'imprimeur : vraie taille, haute définition, fond perdu 3 mm et traits de coupe */
+var SGPR={A5:[148,210,300],A4:[210,297,300],A3:[297,420,200],A2:[420,594,150]};
+function sgPrintAsk(v){var o=document.createElement("div");o.style.cssText="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px";
+ var ph=(SGS.P||[]).filter(function(p){return p.im;}).map(function(p){return Math.min(p.im.width,p.im.height);}),mn=ph.length?Math.min.apply(null,ph):0;
+ o.innerHTML='<div style="background:var(--bg,#fff);color:var(--tx,#111);border-radius:16px;padding:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto"><b style="font-size:17px">🖨️ '+esc(TT("PDF pour l'imprimeur"))+'</b><div class="hint" style="margin:6px 0 10px">'+esc(TT("Taille réelle, haute définition, fond perdu de 3 mm et traits de coupe : prêt pour l'imprimerie."))+'</div>'
+  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+Object.keys(SGPR).map(function(k){var F=SGPR[k],need=Math.round(F[0]/25.4*F[2]*0.45),warn=mn&&mn<need;return '<button class="btn'+(k==="A4"?'':' sec')+'" data-pf="'+k+'" style="margin:0;padding:10px 4px;line-height:1.25">'+k+'<span style="display:block;font-size:11px;font-weight:400">'+F[0]+' × '+F[1]+' mm'+(warn?' · ⚠️ '+esc(TT("photo petite")):'')+'</span></button>';}).join("")+'</div>'
+  +'<div class="hint" style="margin:12px 0 0">💡 '+esc(TT("Les couleurs très vives (fluo) sortent un peu plus ternes sur papier : demande un BAT (épreuve) à ton imprimeur avant le grand tirage."))+'</div>'
+  +'<button class="btn sec full" id="pf_x" style="margin-top:12px">'+esc(TT("Fermer"))+'</button></div>';
+ document.body.appendChild(o);o.querySelector("#pf_x").onclick=function(){o.remove();};
+ Array.prototype.forEach.call(o.querySelectorAll("[data-pf]"),function(b){b.onclick=function(){var k=b.getAttribute("data-pf");o.remove();toast(TT("Préparation du PDF…"));setTimeout(function(){try{var bl=sgPrintPdf(v,k);if(bl){dl(bl,sgName()+"_imprimeur_"+k+".pdf");pfLog("sg_partage","imprimeur");}}catch(e){toast(uErr(e));}},60);};});}
+function sgPrintPdf(v,k){var F=SGPR[k],mw=F[0],mh=F[1],dpi=F[2],bl=3,ex=12,mm=function(x){return Math.round(x/25.4*dpi);};
+ SGFMT._pr=[mm(mw+2*bl),mm(mh+2*bl)];var art=sgDraw(SGS.type,v.ti,v.v,sgData(),"_pr",1);delete SGFMT._pr;
+ var W=mm(mw+2*ex),H=mm(mh+2*ex),pg=mk(W,H),y=pg.getContext("2d");y.fillStyle="#fff";y.fillRect(0,0,W,H);y.drawImage(art,mm(ex-bl),mm(ex-bl));
+ var t0=mm(ex),t1=mm(ex+mw),u0=mm(ex),u1=mm(ex+mh),off=mm(bl+1),len=mm(6);y.strokeStyle="#000";y.lineWidth=Math.max(1,Math.round(dpi/150));y.beginPath();
+ [[t0,u0,-1,-1],[t1,u0,1,-1],[t0,u1,-1,1],[t1,u1,1,1]].forEach(function(q){y.moveTo(q[0]+q[2]*off,q[1]);y.lineTo(q[0]+q[2]*(off+len),q[1]);y.moveTo(q[0],q[1]+q[3]*off);y.lineTo(q[0],q[1]+q[3]*(off+len));});y.stroke();
+ y.fillStyle="#666";y.font=Math.round(mm(2.6))+"px Arial";y.textAlign="left";y.fillText("YiriDesign · "+k+" "+mw+"×"+mh+" mm · "+TT("fond perdu")+" 3 mm",mm(ex),mm(ex-6));
+ var b=makePdfMulti([{c:pg,pw:(mw+2*ex)*72/25.4}]);art.width=1;pg.width=1;return b;}
 /* v402 : leçon 8 — bilan design automatique de chaque affiche (hiérarchie, polices, espace, texte, photo) */
 function sgAudit(v){var B=[],of=CanvasRenderingContext2D.prototype.fillText,cv=null;
  CanvasRenderingContext2D.prototype.fillText=function(t,X,Y){try{var s=String(t);if(s.trim()&&/[0-9A-Za-zÀ-ÿ]/.test(s)){var m=this.measureText(s),tr=this.getTransform(),px=+((/(\d+(?:\.\d+)?)px/.exec(this.font)||[0,0])[1]),fam=(/"([^"]+)"/.exec(this.font)||[0,this.font])[1];
@@ -9358,7 +9375,7 @@ function sgDetail(v){var T=sgTy();SGS.pick=v;SGS.edit=0;pfLog("sg_choix",SGS.typ
   +'<div><span>'+esc(TT("Texte"))+'</span><button data-tk="-">A−</button><button data-tk="+">A+</button><button data-tk="0">↺</button></div>'
   +'<details id="sg_aud" style="margin:8px 0 0;font-size:14px"><summary style="font-weight:700">🎓 '+esc(TT("Bilan design"))+' …</summary></details>'
   +'<button class="sg-txt" id="sg_tx">✏️ '+esc(TT("Modifier le texte"))+'</button><button class="sg-txt" id="sg_far" style="margin-top:6px">👁 '+esc(TT("Test des 3 secondes"))+'</button><button class="sg-txt'+(SGGRID?' on':'')+'" id="sg_grid" style="margin-top:6px">'+(SGGRID?'✅ ':'📐 ')+esc(TT(SGGRID?"Grille d'alignement : affichée":"Afficher la grille d'alignement"))+'</button><button class="sg-txt'+(SGP2?' on':'')+'" id="sg_p2" style="margin-top:6px">'+(SGP2?'✅ ':'🔤 ')+esc(TT(SGP2?"2 polices seulement : activé":"2 polices seulement"))+'</button></div><div class="menu"><button class="btn full" id="sg_sh" style="background:#16a34a">📲 '+esc(TT("Partager (WhatsApp, Facebook…)"))+'</button>'
-  +'<div style="display:flex;gap:8px"><button class="btn sec" id="sg_dl" style="flex:1;padding:12px 4px">⬇️ '+esc(TT("Enregistrer"))+'</button><button class="btn sec" id="sg_pdf" style="flex:1;padding:12px 4px">📄 PDF</button></div>'
+  +'<div style="display:flex;gap:8px"><button class="btn sec" id="sg_dl" style="flex:1;padding:12px 4px">⬇️ '+esc(TT("Enregistrer"))+'</button><button class="btn sec" id="sg_pdf" style="flex:1;padding:12px 4px">📄 PDF</button></div><button class="btn sec full" id="sg_prt" style="margin-top:8px">🖨️ '+esc(TT("PDF pour l'imprimeur"))+'</button>'
   +(SGS.type==="resto"&&SGS.P.length?'<button class="btn full" id="sg_menu" style="background:#b45309">📖 '+esc(TT("Carte menu de plusieurs pages"))+'</button>':'')+(many?'<button class="btn sec full" id="sg_lot">📚 '+esc(TT("Une affiche par produit"))+' ('+SGS.P.length+')</button>':'')
   +(!pub?'<button class="btn sec full" id="sg_pack">🎉 '+esc(TT(SGS.type==="deces"?"Annonce + programme + remerciements":"Pack : annonce + programme + rappel + merci"))+'</button>':'')+'</div></div>';
  var full=null;function F(){if(!full)full=sgDraw(SGS.type,v.ti,v.v,sgData(),SGS.fmt,1);return full;}
@@ -9392,6 +9409,7 @@ function sgDetail(v){var T=sgTy();SGS.pick=v;SGS.edit=0;pfLog("sg_choix",SGS.typ
    q.textContent=TT("As-tu lu tout de suite le message principal ? Sinon : titre plus court, ou active « Mettre le titre en valeur ».");o.querySelector("img").style.filter="none";},1000);};
  document.getElementById("sg_sh").onclick=function(){pfLog("sg_partage","partage");sgKeep(F(),v);F().toBlob(function(b){fqShare([new File([b],sgName()+".jpg",{type:"image/jpeg"})],"");},"image/jpeg",0.92);};
  document.getElementById("sg_dl").onclick=function(){pfLog("sg_partage","image");sgKeep(F(),v);F().toBlob(function(b){dl(b,sgName()+".jpg");toast(TT("Affiche enregistrée"));},"image/jpeg",0.95);};
+ document.getElementById("sg_prt").onclick=function(){sgPrintAsk(v);};
  document.getElementById("sg_pdf").onclick=function(){pfLog("sg_partage","pdf");var c=SGS.fmt==="a4"?F():sgDraw(SGS.type,v.ti,v.v,sgData(),"a4",1);sgKeep(c,v);dl(makePdf(c),sgName()+".pdf");toast(TT("PDF enregistré"));};
  var mnb=document.getElementById("sg_menu");if(mnb)mnb.onclick=function(){sgMenuScreen(v);};var lt=document.getElementById("sg_lot");if(lt)lt.onclick=function(){sgBatch("lot");};var pk=document.getElementById("sg_pack");if(pk)pk.onclick=function(){sgBatch("pack");};}
 /* v382 : affiche gardée dans « Mes créations » (image prête à renvoyer) */

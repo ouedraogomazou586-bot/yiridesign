@@ -5,6 +5,19 @@ name: Fabriquer YiriDesign (APK natif)
 
 on:
   workflow_dispatch:
+  # se lance tout seul quand l'application change sur GitHub
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "i18n*.js"
+      - "ui-img.js"
+      - "manifest.webmanifest"
+
+# si plusieurs envois arrivent d'affilée, seule la dernière fabrication continue
+concurrency:
+  group: apk-natif
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -64,6 +77,9 @@ jobs:
         run: |
           mkdir -p /tmp/natif/www
           cp index.html /tmp/natif/www/
+          # numéro de fabrication dans l'APK (pour le message « Nouvelle version disponible »)
+          sed -i "s/var APKV=0;/var APKV=${{ github.run_number }};/" /tmp/natif/www/index.html
+          grep -o "var APKV=[0-9]*;" /tmp/natif/www/index.html || echo "Numéro APK non écrit (ancienne application)"
           cp -r assets /tmp/natif/www/assets
           for f in manifest.webmanifest ic192.png ic512.png ui-img.js i18n.js i18n-en.js i18n-ar.js i18n-es.js i18n-pt.js i18n-de.js i18n-zh.js; do [ -f "$f" ] && cp "$f" /tmp/natif/www/ || true; done
           # traductions, dictionnaire de correction, lecture PDF et détection de visage : aussi dans l'APK

@@ -93,7 +93,7 @@ footer{border-top:1px solid var(--bd);padding:24px 0 40px;color:var(--mut);font-
 </div></section>
 <footer><div class="w">© YiriDesign · Fait au Burkina Faso · <a href="https://yiridesign.com/confidentialite.html" style="color:inherit;text-decoration:underline">Politique de confidentialité</a> · <a href="https://yiridesign.com/conditions.html" style="color:inherit;text-decoration:underline">Conditions d'utilisation et de vente</a></div></footer>
 <script>
-/* Lien de l'application : même compte GitHub Pages, dossier « yiridesign ». Modifie APP_URL si l'adresse est différente. */
+/* Lien de l application */
 var APP_URL="https://yiridesign.com/";
 var url=APP_URL||(location.origin+"/yiridesign/");
 var a=document.getElementById("open");a.href=url;
@@ -114,16 +114,12 @@ inst.onclick=function(ev){ev.preventDefault();
  if(ios){document.getElementById("ios").scrollIntoView({behavior:"smooth",block:"center"});return;}
  window.location.href=url+(url.indexOf("?")<0?"?":"&")+"install=1";};
 
-/* APK : lu automatiquement dans la dernière « release » du dépôt GitHub de l'application. */
-var GH_OWNER="ouedraogomazou586-bot";
-var GH_REPO="yiridesign";
+/* APK : hébergé sur yiridesign.com (le fichier yiridesign.apk et sa fiche apk-info.json) */
 (function(){
- if(!GH_OWNER)return;
- fetch("https://api.github.com/repos/"+GH_OWNER+"/"+GH_REPO+"/releases/latest").then(function(r){if(r.status===403||r.status===429){var b0=document.getElementById("apk");b0.href="https://github.com/"+GH_OWNER+"/"+GH_REPO+"/releases/latest";b0.style.display="inline-flex";return Promise.reject();}return r.ok?r.json():Promise.reject();}).then(function(j){
-  var as=(j.assets||[]).filter(function(a){return /\.apk$/i.test(a.name);})[0];if(!as)return;
-  var b=document.getElementById("apk");b.href=as.browser_download_url;b.style.display="inline-flex";
-  var mo=(as.size/1048576).toFixed(1).replace(".",","),d=new Date(j.published_at).toLocaleDateString("fr-FR");
-  document.getElementById("apkver").textContent="Version "+(j.tag_name||"")+" · "+mo+" Mo · mise en ligne le "+d;
+ fetch("/apk-info.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(j){
+  var b=document.getElementById("apk");b.href="/yiridesign.apk?v="+(j.v||"");b.setAttribute("download","YiriDesign.apk");b.style.display="inline-flex";
+  var mo=((j.size||0)/1048576).toFixed(1).replace(".",","),d="";try{d=new Date(j.date).toLocaleDateString("fr-FR");}catch(e){}
+  document.getElementById("apkver").textContent="Version "+(j.v||"")+" · "+mo+" Mo"+(d?" · mise en ligne le "+d:"");
  }).catch(function(){});
 })();
 </script></body></html>

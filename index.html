@@ -936,7 +936,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=413;function verTxt(){return Math.floor(VER/100)+"."+(VER-380)+".0";}window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=414;function verTxt(){return Math.floor(VER/100)+"."+(VER-380)+".0";}window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3306,6 +3306,16 @@ function makePdf(c){
   var out=new Uint8Array(len),p=0;parts.forEach(function(u){out.set(u,p);p+=u.length;});
   return new Blob([out],{type:"application/pdf"});
 }
+/* v414 : carte de visite — planche A4 de 10 cartes (89 × 51 mm) avec traits de coupe ; verso inversé pour le recto-verso */
+function cardSheetPdf(rec,ver){var dpi=300,mm=function(v){return Math.round(v/25.4*dpi);},cw=88.9,ch=50.8,cols=2,rows=5,x0=(210-cols*cw)/2,y0=(297-rows*ch)/2,pages=[];
+ [rec,ver].forEach(function(im,si){if(!im)return;var pg=mk(mm(210),mm(297)),x=pg.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,pg.width,pg.height);x.imageSmoothingQuality="high";
+  for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){var cc=si?cols-1-c:c;x.drawImage(im,mm(x0+cc*cw),mm(y0+r*ch),mm(cw),mm(ch));}
+  x.strokeStyle="#000";x.lineWidth=Math.max(1,Math.round(dpi/254));var L=mm(5),g=mm(1.5);x.beginPath();
+  for(var i=0;i<=cols;i++){var X=mm(x0+i*cw);x.moveTo(X,mm(y0)-g);x.lineTo(X,mm(y0)-g-L);x.moveTo(X,mm(y0+rows*ch)+g);x.lineTo(X,mm(y0+rows*ch)+g+L);}
+  for(var j=0;j<=rows;j++){var Y=mm(y0+j*ch);x.moveTo(mm(x0)-g,Y);x.lineTo(mm(x0)-g-L,Y);x.moveTo(mm(x0+cols*cw)+g,Y);x.lineTo(mm(x0+cols*cw)+g+L,Y);}x.stroke();
+  x.fillStyle="#888";x.font=mm(2.6)+"px Arial";x.fillText((si?TT("Verso"):TT("Recto"))+" · 10 × 89 × 51 mm · "+TT("Taille réelle / 100 %"),mm(x0),mm(y0)-mm(9));
+  pages.push({c:pg,pw:595.28});});
+ var b=makePdfMulti(pages);pages.forEach(function(q){q.c.width=1;});return b;}
 function makePdfMulti(pages){
   var enc=new TextEncoder(),parts=[],off=[],len=0,n=pages.length;
   function add(u){parts.push(u);len+=u.length;}function addS(t){add(enc.encode(t));}
@@ -6353,6 +6363,7 @@ function pane0(){
        +'<details class="more"><summary>🗂 '+esc(TT("Autres formats (imprimeur, graphiste)"))+'</summary><button class="btn sec full" id="xpf">PNG avec fond</button><button class="btn sec full" id="xpd">PDF</button><button class="btn sec full" id="xs">Logo vectoriel (SVG)</button><div class="hint" style="margin:4px 0 8px">'+TT("Le SVG est un fichier pour imprimeur ou graphiste : il ne s\'ouvre pas dans la galerie du téléphone. Pour la galerie et WhatsApp, utilise le PNG.")+'</div><button class="btn sec full" id="xch">📄 Charte graphique (image)</button><button class="btn sec full" id="xvec" style="margin-top:8px">🧩 Vectoriser un logo existant (image → SVG)</button></details>'
        +'<div class="hint" style="margin-top:10px">Avant de l\'utiliser officiellement, vérifie qu\'un autre commerce de ton domaine n\'a pas un logo ou un nom trop proche, et pense à déposer ta marque auprès de l\'OAPI.</div>';
     }else{
+      if(CUR.kind==="carte")h+='<button class="btn full" id="xcp" style="margin:0 0 6px;background:#0f766e">🖨️ '+esc(TT("Planche A4 : 10 cartes (recto + verso)"))+'</button><div class="hint k" style="margin:0 0 12px">'+esc(TT("Cartes de 89 × 51 mm, avec traits de coupe. Le verso est placé pour l'impression recto-verso. Imprime en « Taille réelle » / 100 %."))+'</div>';
       if(CUR.id==="mariage")h+='<button class="btn full" id="wd_open2" style="margin:0 0 10px">💍 Choisir un autre modèle ('+(ST.mt!=null?WED.names[ST.mt]:'classique')+')</button>';
       if(CUR.id==="deces")h+='<button class="btn full" id="wd_open2" style="margin:0 0 10px">🕊️ '+TT("Choisir un autre modèle")+' ('+(ST.mt!=null?WED.namesD[ST.mt]:TT("classique"))+')</button>';
       if(stepsOn()){
@@ -6369,6 +6380,7 @@ function pane0(){
       }
     }
     p.innerHTML=h;
+    var xcp=document.getElementById("xcp");if(xcp)xcp.onclick=function(){var cs=PRE.filter(function(q){return q.c;});if(!cs.length){toast(TT("Encore un instant…"));return;}toast(TT("Préparation du PDF…"));setTimeout(function(){try{var b=cardSheetPdf(cs[0].c,cs[1]?cs[1].c:null);dl(b,"cartes-de-visite-A4.pdf");pfLog("export","carte_planche");}catch(e){toast(uErr(e));}},60);};
     function all(fmt){if(fmt==="pdf"&&PRE.length>1&&PRE.every(function(q){return q.c;})){var r=clientPdf();if(r){dl(r.blob,r.name);toast("PDF téléchargé (recto + verso)");return;}}PRE.forEach(function(q,i){setTimeout(function(){exportOne(q,fmt);},i*400);});toast("Téléchargement lancé");}
     function on(id,fn){var e=document.getElementById(id);if(!e)return;var pay={xi:1,xj:1,xd:1,xsh:1,xv:1,xsend:1,xpdfdl:1,xh:1,xs:1,xvec:1,xpk:1,xch:1,xp:1,xpf:1,xpd:1}[id],sv=CUR&&CUR.id;e.onclick=pay?function(){var a=arguments,t=this;svPay(sv,function(){fn.apply(t,a);});}:fn;}
     on("vf_big",vfBigOpen);

@@ -936,7 +936,7 @@ function brandVal(b){
 var SET_DEF={fxMig:0,theme:"auto",ts:100,q:93,wm:false,wmt:"Créé avec YiriDesign",devise:"FCFA",mention:"",ind:"226",tpl:0,fmt:"A4",fit:"contain",vmode:"ad",vfmt:"v",vdur:4,vfx:"zoom",vend:true,vfps:30,vres:720,vtr:0.55,vvol:90,vbr:"auto",vwake:true,marge:0,wmpos:"bas",wmop:35,cols:2,hide:[],datefmt:"num",invPre:"",invNext:1,autosave:true,pin:"",perf:"auto"};var SET=(function(){var o={},sv=lsGet("ac_set",{}),k;for(k in SET_DEF)o[k]=SET_DEF[k];if(sv&&typeof sv==="object")for(k in sv)o[k]=sv[k];return o;})();
 SET.hide=SET.hide||[];if(SET.vfps==null){SET.vfps=30;SET.vres=720;SET.vtr=0.55;SET.vvol=90;SET.vbr="auto";SET.vwake=true;SET.marge=0;SET.wmpos="bas";SET.wmop=35;SET.cols=2;SET.datefmt="num";SET.invPre="";SET.invNext=1;SET.autosave=true;SET.pin="";SET.vmode="ad";SET.vfmt="v";SET.vdur=4;SET.vfx="zoom";SET.vend=true;}
 var UIIMG={st:0,q:[]};function uiImg(cb){if(window.UI_IMG){cb();return;}UIIMG.q.push(cb);if(UIIMG.st)return;UIIMG.st=1;var sc=document.createElement("script");sc.src="ui-img.js?v="+(window.VER||0);sc.onload=function(){var q=UIIMG.q;UIIMG.q=[];q.forEach(function(f){try{f();}catch(e){}});};sc.onerror=function(){UIIMG.st=0;UIIMG.q=[];};document.head.appendChild(sc);}
-var VER=414;function verTxt(){return Math.floor(VER/100)+"."+(VER-380)+".0";}window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
+var VER=415;function verTxt(){return Math.floor(VER/100)+"."+(VER-380)+".0";}window.addEventListener('online',function(){document.body.classList.remove('off');});window.addEventListener('offline',function(){document.body.classList.add('off');});if(!navigator.onLine)document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('off');});var BACK=null;var CP=0,XP="img";
 function saveSet(){lsSet("ac_set",SET);}
 /* Retour au style simple : les brouillons enregistrés en ambiance « Stylé » repassent une fois en « Sobre » */
 (function(){try{if(SET.fxMig!==29){Object.keys(localStorage).filter(function(k){return k.indexOf("ac_d_")===0;}).forEach(function(k){var o=JSON.parse(localStorage.getItem(k));if(o&&o._st&&(o._st.fx===1||o._st.fx===0)){o._st.fx=3;localStorage.setItem(k,JSON.stringify(o));}});SET.fxMig=29;saveSet();}}catch(e){}})();
@@ -3316,6 +3316,23 @@ function cardSheetPdf(rec,ver){var dpi=300,mm=function(v){return Math.round(v/25
   x.fillStyle="#888";x.font=mm(2.6)+"px Arial";x.fillText((si?TT("Verso"):TT("Recto"))+" · 10 × 89 × 51 mm · "+TT("Taille réelle / 100 %"),mm(x0),mm(y0)-mm(9));
   pages.push({c:pg,pw:595.28});});
  var b=makePdfMulti(pages);pages.forEach(function(q){q.c.width=1;});return b;}
+/* v415 : badges en série — une liste de noms devient une planche A4 (9 badges par page) */
+function badgeBatch(){var o=document.createElement("div");o.style.cssText="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px";
+ o.innerHTML='<div style="background:var(--bg,#fff);color:var(--tx,#111);border-radius:16px;padding:16px;max-width:440px;width:100%"><b style="font-size:17px">📇 '+esc(TT("Badges en série (liste de noms)"))+'</b><div class="hint" style="margin:6px 0">'+esc(TT("Un nom par ligne. Pour changer la fonction : Nom ; Fonction"))+'<br>'+esc(TT("La photo n'est pas reprise : chaque personne a la sienne."))+'</div><textarea id="bb_l" style="min-height:160px;width:100%" placeholder="Awa Ouédraogo\nIbrahim Kaboré ; Trésorier\nFatimata Sawadogo"></textarea><div class="row" style="gap:8px;margin-top:10px"><button class="btn sec" id="bb_x" style="flex:1;margin:0">'+esc(TT("Annuler"))+'</button><button class="btn" id="bb_ok" style="flex:1;margin:0">'+esc(TT("Créer le PDF"))+'</button></div><div class="hint" id="bb_st" style="margin-top:8px"></div></div>';
+ document.body.appendChild(o);o.querySelector("#bb_x").onclick=function(){o.remove();};
+ o.querySelector("#bb_ok").onclick=function(){var L=o.querySelector("#bb_l").value.split("\n").map(function(l){return l.trim();}).filter(Boolean).slice(0,200);if(!L.length){toast(TT("Écris au moins un nom."));return;}
+  var st=o.querySelector("#bb_st");st.textContent=TT("Préparation du PDF…");setTimeout(function(){var ph0=ST.photo;try{ST.photo=null;var n0=v257cnt("yiri_badgen"),C=[];
+   L.forEach(function(l,i){var pp=l.split(/\s*;\s*/),d=Object.assign({},DATA,{nom:pp[0],role:pp[1]||DATA.role,bauto:"Non"});if(DATA.bauto==="Oui")d.num="N° "+("0000"+(n0+i+1)).slice(-4);var r=drawKind1(CUR,d),c=r&&r[0]&&(r[0].c||r[0]);if(c&&c.getContext)C.push(c);});
+   if(DATA.bauto==="Oui"){try{localStorage.setItem("yiri_badgen",String(n0+L.length));}catch(e){}}
+   var b=sheetPdf(C,54,86,3,3,TT("Badges"));dl(b,"badges-"+L.length+".pdf");pfLog("export","badge_serie "+L.length);o.remove();toast(L.length+" "+TT("badges prêts"));}catch(e){st.textContent=uErr(e);}finally{ST.photo=ph0;}},60);};}
+function sheetPdf(C,wm,hm,cols,rows,lab){var dpi=300,mm=function(v){return Math.round(v/25.4*dpi);},per=cols*rows,x0=(210-cols*wm)/2,y0=(297-rows*hm)/2,pages=[];
+ for(var k=0;k<C.length;k+=per){var pg=mk(mm(210),mm(297)),x=pg.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,pg.width,pg.height);x.imageSmoothingQuality="high";
+  C.slice(k,k+per).forEach(function(im,i){var c=i%cols,r=Math.floor(i/cols);x.drawImage(im,mm(x0+c*wm),mm(y0+r*hm),mm(wm),mm(hm));});
+  x.strokeStyle="#000";x.lineWidth=Math.max(1,Math.round(dpi/254));var L=mm(5),g=mm(1.5);x.beginPath();
+  for(var i=0;i<=cols;i++){var X=mm(x0+i*wm);x.moveTo(X,mm(y0)-g);x.lineTo(X,mm(y0)-g-L);x.moveTo(X,mm(y0+rows*hm)+g);x.lineTo(X,mm(y0+rows*hm)+g+L);}
+  for(var j=0;j<=rows;j++){var Y=mm(y0+j*hm);x.moveTo(mm(x0)-g,Y);x.lineTo(mm(x0)-g-L,Y);x.moveTo(mm(x0+cols*wm)+g,Y);x.lineTo(mm(x0+cols*wm)+g+L,Y);}x.stroke();
+  x.fillStyle="#888";x.font=mm(2.6)+"px Arial";x.fillText(lab+" · "+wm+" × "+hm+" mm · "+TT("Taille réelle / 100 %"),mm(x0),mm(y0)-mm(9));pages.push({c:pg,pw:595.28});}
+ var b=makePdfMulti(pages);pages.forEach(function(q){q.c.width=1;});C.forEach(function(c){try{c.width=1;}catch(e){}});return b;}
 function makePdfMulti(pages){
   var enc=new TextEncoder(),parts=[],off=[],len=0,n=pages.length;
   function add(u){parts.push(u);len+=u.length;}function addS(t){add(enc.encode(t));}
@@ -6363,6 +6380,7 @@ function pane0(){
        +'<details class="more"><summary>🗂 '+esc(TT("Autres formats (imprimeur, graphiste)"))+'</summary><button class="btn sec full" id="xpf">PNG avec fond</button><button class="btn sec full" id="xpd">PDF</button><button class="btn sec full" id="xs">Logo vectoriel (SVG)</button><div class="hint" style="margin:4px 0 8px">'+TT("Le SVG est un fichier pour imprimeur ou graphiste : il ne s\'ouvre pas dans la galerie du téléphone. Pour la galerie et WhatsApp, utilise le PNG.")+'</div><button class="btn sec full" id="xch">📄 Charte graphique (image)</button><button class="btn sec full" id="xvec" style="margin-top:8px">🧩 Vectoriser un logo existant (image → SVG)</button></details>'
        +'<div class="hint" style="margin-top:10px">Avant de l\'utiliser officiellement, vérifie qu\'un autre commerce de ton domaine n\'a pas un logo ou un nom trop proche, et pense à déposer ta marque auprès de l\'OAPI.</div>';
     }else{
+      if(CUR.kind==="badge")h+='<button class="btn full" id="xbb" style="margin:0 0 6px;background:#0f766e">📇 '+esc(TT("Badges en série (liste de noms)"))+'</button><div class="hint k" style="margin:0 0 12px">'+esc(TT("Un badge par personne, 9 par feuille A4 (54 × 86 mm), avec traits de coupe."))+'</div>';
       if(CUR.kind==="carte")h+='<button class="btn full" id="xcp" style="margin:0 0 6px;background:#0f766e">🖨️ '+esc(TT("Planche A4 : 10 cartes (recto + verso)"))+'</button><div class="hint k" style="margin:0 0 12px">'+esc(TT("Cartes de 89 × 51 mm, avec traits de coupe. Le verso est placé pour l'impression recto-verso. Imprime en « Taille réelle » / 100 %."))+'</div>';
       if(CUR.id==="mariage")h+='<button class="btn full" id="wd_open2" style="margin:0 0 10px">💍 Choisir un autre modèle ('+(ST.mt!=null?WED.names[ST.mt]:'classique')+')</button>';
       if(CUR.id==="deces")h+='<button class="btn full" id="wd_open2" style="margin:0 0 10px">🕊️ '+TT("Choisir un autre modèle")+' ('+(ST.mt!=null?WED.namesD[ST.mt]:TT("classique"))+')</button>';
@@ -6380,6 +6398,7 @@ function pane0(){
       }
     }
     p.innerHTML=h;
+    var xbb=document.getElementById("xbb");if(xbb)xbb.onclick=badgeBatch;
     var xcp=document.getElementById("xcp");if(xcp)xcp.onclick=function(){var cs=PRE.filter(function(q){return q.c;});if(!cs.length){toast(TT("Encore un instant…"));return;}toast(TT("Préparation du PDF…"));setTimeout(function(){try{var b=cardSheetPdf(cs[0].c,cs[1]?cs[1].c:null);dl(b,"cartes-de-visite-A4.pdf");pfLog("export","carte_planche");}catch(e){toast(uErr(e));}},60);};
     function all(fmt){if(fmt==="pdf"&&PRE.length>1&&PRE.every(function(q){return q.c;})){var r=clientPdf();if(r){dl(r.blob,r.name);toast("PDF téléchargé (recto + verso)");return;}}PRE.forEach(function(q,i){setTimeout(function(){exportOne(q,fmt);},i*400);});toast("Téléchargement lancé");}
     function on(id,fn){var e=document.getElementById(id);if(!e)return;var pay={xi:1,xj:1,xd:1,xsh:1,xv:1,xsend:1,xpdfdl:1,xh:1,xs:1,xvec:1,xpk:1,xch:1,xp:1,xpf:1,xpd:1}[id],sv=CUR&&CUR.id;e.onclick=pay?function(){var a=arguments,t=this;svPay(sv,function(){fn.apply(t,a);});}:fn;}
@@ -8970,6 +8989,14 @@ function sgDate(d){var o={full:"",wd:"",day:"",mon:"",yr:"",time:""};if(d.heure)
  if(!d.date)return o;var dt=new Date(d.date+"T12:00:00");if(isNaN(dt))return o;var L=sgLang();
  try{o.wd=dt.toLocaleDateString(L,{weekday:"long"});o.day=String(dt.getDate());o.mon=dt.toLocaleDateString(L,{month:"long"});o.yr=String(dt.getFullYear());o.full=dt.toLocaleDateString(L,{weekday:"long",day:"numeric",month:"long",year:"numeric"});}catch(e){o.full=d.date;}
  o.full=o.full.charAt(0).toUpperCase()+o.full.slice(1);o.wd=o.wd.charAt(0).toUpperCase()+o.wd.slice(1);return o;}
+/* v415 : faire-part et affiches — vérifie qu'un jour écrit à la main correspond bien à la date (ex. « samedi 14 décembre ») et que la date n'est pas passée */
+var SGWD=["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"],SGMN=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+function sgDateWarn(f){try{var now=new Date(),out="";Object.keys(f||{}).some(function(k){var v=f[k];if(typeof v!=="string")return false;var t=v.toLowerCase().replace(/\s+/g," ");
+  var m=t.match(/(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+(\d{1,2})(?:er)?\s+(janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?:\s+(\d{4}))?/);if(!m)return false;
+  var mi=SGMN.indexOf(m[3].replace("fevrier","février").replace("aout","août").replace("decembre","décembre")),day=+m[2],yr=m[4]?+m[4]:now.getFullYear();if(mi<0||day<1||day>31)return false;
+  var dt=new Date(yr,mi,day,12);if(!m[4]&&dt<new Date(now.getFullYear(),now.getMonth(),now.getDate()-1))dt=new Date(yr+1,mi,day,12);if(dt.getMonth()!==mi){out=TT("Date impossible")+" : "+day+" "+SGMN[mi]+".";return true;}
+  var wd=SGWD[dt.getDay()];if(wd!==m[1]){out=TT("Le")+" "+day+" "+SGMN[mi]+" "+dt.getFullYear()+" "+TT("est un")+" "+TT(wd)+", "+TT("pas un")+" "+TT(m[1])+". "+TT("Vérifie la date.");return true;}
+  if(m[4]&&dt<new Date(now.getFullYear(),now.getMonth(),now.getDate())){out=TT("Cette date est déjà passée : vérifie l'année.");return true;}return false;});return out;}catch(e){return "";}}
 function sgWhen(d){var D=sgDate(d);return D.full+(D.time?(D.full?" · ":"")+D.time:"");}
 /* ---------- éléments communs ---------- */
 function sgFootBar(x,W,H,u,d,o){var h=o.h||150*u,y=H-h;if(!d.contact&&!d.shop&&!d.lieu)return H;x.fillStyle=o.bg;x.fillRect(0,y,W,h);
@@ -9470,7 +9497,7 @@ function sgDetail(v){var T=sgTy();SGS.pick=v;SGS.edit=0;pfLog("sg_choix",SGS.typ
   +(SGS.type==="resto"&&SGS.P.length?'<button class="btn full" id="sg_menu" style="background:#b45309">📖 '+esc(TT("Carte menu de plusieurs pages"))+'</button>':'')+(many?'<button class="btn sec full" id="sg_lot">📚 '+esc(TT("Une affiche par produit"))+' ('+SGS.P.length+')</button>':'')
   +(!pub?'<button class="btn sec full" id="sg_pack">🎉 '+esc(TT(SGS.type==="deces"?"Annonce + programme + remerciements":"Pack : annonce + programme + rappel + merci"))+'</button>':'')+'</div></div>';
  var full=null;function F(){if(!full)full=sgDraw(SGS.type,v.ti,v.v,sgData(),SGS.fmt,1);return full;}
- setTimeout(function(){try{SGLONG=0;document.getElementById("sg_img").src=sgDraw(SGS.type,v.ti,v.v,sgData(),SGS.fmt,0.6).toDataURL("image/jpeg",0.88);if(SGLONG)toast(TT("Texte long : raccourcis-le pour qu'il soit plus gros et plus visible."));}catch(e){}},20);
+ setTimeout(function(){try{SGLONG=0;document.getElementById("sg_img").src=sgDraw(SGS.type,v.ti,v.v,sgData(),SGS.fmt,0.6).toDataURL("image/jpeg",0.88);if(SGLONG)toast(TT("Texte long : raccourcis-le pour qu'il soit plus gros et plus visible."));var dw=sgDateWarn(SGS.f);if(dw)setTimeout(function(){toast("⚠️ "+dw);},SGLONG?3200:300);}catch(e){}},20);
  sgFmtBind("sg_f2",function(){sgDetail(v);});
  function re(nv){sgDetail(nv);}
  Array.prototype.forEach.call(app.querySelectorAll("[data-ti]"),function(b){b.onclick=function(){re({ti:+b.getAttribute("data-ti"),v:v.v});};});

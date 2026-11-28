@@ -276,8 +276,10 @@ jobs:
               <item android:gravity="center" android:width="120dp" android:height="120dp"><bitmap android:src="@mipmap/ic_launcher" android:gravity="center"/></item>
           </layer-list>
           XML
-          # numéro de version = numéro de fabrication (permet les mises à jour)
-          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          # versionCode = numéro de fabrication (permet les mises à jour) ; versionName affiché = 1.0.N
+          VNAME="1.0.${{ github.run_number }}"
+          echo "$VNAME" > /tmp/vname
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionCode 1 /versionCode ${{ github.run_number }} /; s/versionName \"1.0\"/versionName \"$VNAME\"/" android/app/build.gradle
           grep -n "versionCode\|versionName\|applicationId" android/app/build.gradle
 
       - name: Compiler l'APK (avec le scanner Google)
@@ -296,6 +298,7 @@ jobs:
           cp /tmp/MainActivity.java.bak app/src/main/java/bf/yiridesign/app/MainActivity.java
           cp /tmp/build.gradle.bak app/build.gradle
           rm -f app/src/main/java/bf/yiridesign/app/DocScannerPlugin.java
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionCode 1 /versionCode ${{ github.run_number }} /; s/versionName \"1.0\"/versionName \"$(cat /tmp/vname)\"/" app/build.gradle
           echo sans > /tmp/variante
           ./gradlew assembleDebug --no-daemon --stacktrace
 
@@ -308,7 +311,7 @@ jobs:
       - name: Mettre l'APK sur yiridesign.com (adresse yiridesign.com/yiridesign.apk)
         run: |
           cp "YiriDesign-${{ github.run_number }}.apk" yiridesign.apk
-          printf '{"v":"%s","date":"%s","size":%s}\n' "${{ github.run_number }}" "$(date -u +%Y-%m-%d)" "$(stat -c%s yiridesign.apk)" > apk-info.json
+          printf '{"v":"%s","n":"%s","date":"%s","size":%s}\n' "${{ github.run_number }}" "$(cat /tmp/vname)" "$(date -u +%Y-%m-%d)" "$(stat -c%s yiridesign.apk)" > apk-info.json
           cat apk-info.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

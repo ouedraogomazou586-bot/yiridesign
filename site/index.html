@@ -117,9 +117,9 @@ inst.onclick=function(ev){ev.preventDefault();
 /* APK : hébergé sur yiridesign.com (le fichier yiridesign.apk et sa fiche apk-info.json) */
 (function(){
  fetch("/apk-info.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(j){
-  var b=document.getElementById("apk");b.href="/yiridesign.apk?v="+(j.v||"");b.setAttribute("download","YiriDesign.apk");b.style.display="inline-flex";
+  var b=document.getElementById("apk");b.href="/yiridesign.apk?d="+encodeURIComponent(j.date||"")+"-"+(j.size||"");b.setAttribute("download","YiriDesign.apk");b.style.display="inline-flex";
   var mo=((j.size||0)/1048576).toFixed(1).replace(".",","),d="";try{d=new Date(j.date).toLocaleDateString("fr-FR");}catch(e){}
-  document.getElementById("apkver").textContent="Version "+(j.v||"")+" · "+mo+" Mo"+(d?" · mise en ligne le "+d:"");
+  document.getElementById("apkver").textContent=(j.n?"Version "+j.n+" · ":"")+mo+" Mo"+(d?" · mise en ligne le "+d:"");
  }).catch(function(){});
 })();
 </script></body></html>

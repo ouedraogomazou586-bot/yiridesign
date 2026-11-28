@@ -117,7 +117,7 @@ inst.onclick=function(ev){ev.preventDefault();
 /* APK : hébergé sur yiridesign.com (le fichier yiridesign.apk et sa fiche apk-info.json) */
 (function(){
  fetch("/apk-info.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(j){
-  var b=document.getElementById("apk");b.href="/yiridesign.apk?d="+encodeURIComponent(j.date||"")+"-"+(j.size||"");b.setAttribute("download","YiriDesign.apk");b.style.display="inline-flex";
+  var b=document.getElementById("apk");b.href="/yiridesign.apk?d="+encodeURIComponent(j.date||"")+"-"+(j.size||"");b.setAttribute("download","YiriDesign.apk");b.style.display="inline-flex";b.addEventListener("click",function(){try{if(navigator.webdriver)return;fetch("https://segdgrecoreoqvrqwavj.supabase.co/rest/v1/rpc/log_download",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json","apikey":"sb_publishable_D7vXRASIe4twImyViuzW-A_d3JCvRl8"},body:JSON.stringify({p_src:"site",p_ver:String(j.n||j.v||"").replace(/^1\.0\./,"")})}).catch(function(){});}catch(e){}});
   var mo=((j.size||0)/1048576).toFixed(1).replace(".",","),d="";try{d=new Date(j.date).toLocaleDateString("fr-FR");}catch(e){}
   document.getElementById("apkver").textContent=(j.n?"Version "+j.n+" · ":"")+mo+" Mo"+(d?" · mise en ligne le "+d:"");
  }).catch(function(){});
